@@ -122,7 +122,7 @@
     </div>
 
     <script>
-        // 🚨🚨🚨 請將這裡替換成您在 Google 試算表發佈為 CSV 的網址 🚨🚨🚨
+        // 🚨🚨🚨 CSV 發佈網址 🚨🚨🚨
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsiRtuRUot8LDq8j8rDjaWbGOyEj5w_E2GPYRmasu7WrSYLgECaYA9V5rAcbY-jcCVWWG2l_jKIWpU/pub?gid=1593533278&single=true&output=csv';
 
         let rawData = [];
@@ -133,11 +133,11 @@
 
         const formatTWD = (num) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(num);
         
-        // 暴力解析數字：不管有沒有 $ 或逗號，只留下數字跟小數點
         const parseNumber = (val) => {
-            if (val === undefined || val === null) return 0;
-            const cleaned = String(val).replace(/[^\d.-]/g, '');
-            return parseFloat(cleaned) || 0;
+            if (!val) return 0;
+            // 暴力清除所有非數字(除小數點與負號以外)字元
+            const cleaned = String(val).replace(/[^0-9.-]/g, '').trim();
+            return isNaN(Number(cleaned)) ? 0 : Number(cleaned);
         };
 
         const standardizeDate = (dateStr) => {
@@ -157,16 +157,12 @@
             return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         };
 
-        // 核彈級暴力比對：移除所有非文字數字元(括號、逗號、空白、特殊符號)，只比對核心文字
+        // 核彈級暴力模糊比對：移除所有空白與換行再進行關鍵字比對
         const findKey = (row, keywords) => {
-            if (!row) return null;
             const keys = Object.keys(row);
             for (let k of keys) {
-                if (!k) continue;
-                const cleanKey = k.replace(/[^\w\u4e00-\u9fa5]/g, ''); 
-                if (keywords.some(kw => cleanKey.includes(kw.replace(/[^\w\u4e00-\u9fa5]/g, '')))) {
-                    return k;
-                }
+                const cleanKey = k.replace(/\s+/g, ''); 
+                if (keywords.some(kw => cleanKey.includes(kw))) return k;
             }
             return null;
         };
@@ -176,19 +172,24 @@
             let ratio = taxFree > 0 ? (effective / taxFree) : 0;
             let bonus = 0;
             
-            let tier1 = Math.max(0, Math.min(taxFree, 800000) - 400000);
+            // Tier 1: 0 to 799,999 is fully calculated at 2% if they cross 400k
+            let tier1 = Math.min(taxFree, 799999);
             bonus += tier1 * ratio * 0.02;
             
-            let tier2 = Math.max(0, Math.min(taxFree, 1200000) - 800000);
+            // Tier 2: 800,000 to 1,199,999 at 2.5%
+            let tier2 = Math.max(0, Math.min(taxFree, 1199999) - 799999);
             bonus += tier2 * ratio * 0.025;
             
-            let tier3 = Math.max(0, Math.min(taxFree, 1600000) - 1200000);
+            // Tier 3: 1,200,000 to 1,599,999 at 3.0%
+            let tier3 = Math.max(0, Math.min(taxFree, 1599999) - 1199999);
             bonus += tier3 * ratio * 0.03;
             
-            let tier4 = Math.max(0, Math.min(taxFree, 2000000) - 1600000);
+            // Tier 4: 1,600,000 to 1,999,999 at 3.5%
+            let tier4 = Math.max(0, Math.min(taxFree, 1999999) - 1599999);
             bonus += tier4 * ratio * 0.035;
             
-            let tier5 = Math.max(0, taxFree - 2000000);
+            // Tier 5: 2,000,000+ at 4.0%
+            let tier5 = Math.max(0, taxFree - 1999999);
             bonus += tier5 * ratio * 0.04;
             
             return bonus;
@@ -244,6 +245,7 @@
                 const outDate = dateKey ? row[dateKey] : '';
                 const yyyyMM = standardizeDate(outDate);
                 
+                // 排除沒有出貨日的空白雜訊行
                 if (!yyyyMM || yyyyMM.length < 6) return false;
                 
                 let isDateInRange = true;
@@ -256,42 +258,20 @@
 
                 return isDateInRange && isMatchSearch;
             }).map(row => {
-                // 三重保險尋找業績欄位
-                const keyTaxFree = findKey(row, ['除稅額', '除稅']);
-                const keyTotal = findKey(row, ['總計', '總額']);
-                const key82 = findKey(row, ['82+28', '8228']);
-                const key66 = findKey(row, ['66大類', '66']);
-                
-                let taxFree = 0;
-                
-                // 保險 1：如果有直接除稅額，直接抓取
-                if (keyTaxFree && parseNumber(row[keyTaxFree]) > 0) {
-                    taxFree = parseNumber(row[keyTaxFree]);
-                } 
-                // 保險 2：抓得到總計，就除以 1.05
-                else if (keyTotal && parseNumber(row[keyTotal]) > 0) {
-                    taxFree = parseNumber(row[keyTotal]) / 1.05;
-                } 
-                // 保險 3：終極手段，親自加總 82 跟 66 的原始金額去推算
-                else {
-                    const amt82 = key82 ? parseNumber(row[key82]) : 0;
-                    const amt66 = key66 ? parseNumber(row[key66]) : 0;
-                    taxFree = (amt82 + amt66) / 1.05;
-                }
-
-                // 處理折扣率
-                const discountKey = findKey(row, ['折扣', '折價']);
-                const discountStr = discountKey ? row[discountKey] : '0';
-                let discountRate = 0;
-                if (String(discountStr).includes('%')) {
-                    discountRate = parseNumber(discountStr) / 100;
-                } else {
-                    discountRate = parseNumber(discountStr);
-                    if (discountRate > 1) discountRate = discountRate / 100; // 避免打成整數 15
-                }
-                
-                const effectiveTaxFree = taxFree * (1 - discountRate);
+                // 暴力比對所有關鍵欄位
+                const totalKey = findKey(row, ['總計', '總額']);
+                const discountKey = findKey(row, ['折扣率', '折價率']);
                 const dateKey = findKey(row, ['出貨日', '出貨日期']);
+                
+                const totalStr = totalKey ? row[totalKey] : '0';
+                const itemTotal = parseNumber(totalStr);
+                const taxFree = itemTotal / 1.05;
+
+                const discountStr = discountKey ? row[discountKey] : '0';
+                // 防止 Google 將 % 寫進去
+                const discountRate = parseFloat(String(discountStr).replace('%', '').trim()) / 100 || 0;
+                const effectiveTaxFree = taxFree * (1 - discountRate);
+
                 const yyyyMM = standardizeDate(dateKey ? row[dateKey] : '');
                 
                 if (yyyyMM) {
@@ -316,6 +296,7 @@
                 };
             });
 
+            // 分月計算累進獎金
             for (const month in monthlyStats) {
                 const stats = monthlyStats[month];
                 globalTotalTaxFree += stats.taxFree;
@@ -418,23 +399,23 @@
             modalBody.innerHTML = '';
             
             const orderFields = ['顧客姓名', '手機', '訂單狀態', '運送狀態', '接單日', '出貨日', '時間', '貨押日'];
-            const amountFields = ['82+28大類原金額', '66大類原金額', '非82大類原金額', '總計', '總計(除去非82', '除稅額', '折扣率', '備註'];
+            const amountFields = ['82+28大類原金額', '66大類原金額', '非82大類原金額', '總計', '總計(除去非82)', '折扣率', '備註'];
 
-            const renderField = (keywords, title, highlight = false) => {
-                const k = findKey(data, keywords);
+            const renderField = (keywords, highlight = false) => {
+                const k = findKey(data, [keywords]); // Fuzzy find the correct column
                 if(k && data[k] !== undefined && data[k] !== '') {
                     const div = document.createElement('div');
                     div.className = 'flex flex-col gap-1';
                     div.innerHTML = `
-                        <span class="text-xs text-slate-500 uppercase tracking-wider">${title || k}</span>
+                        <span class="text-xs text-slate-500 uppercase tracking-wider">${k}</span>
                         <span class="text-sm ${highlight ? 'text-blue-400 font-mono text-base' : 'text-slate-200'}">${data[k]}</span>
                     `;
                     modalBody.appendChild(div);
                 }
             };
 
-            orderFields.forEach(k => renderField([k], k));
-            amountFields.forEach(k => renderField([k], k, k.includes('金額') || k.includes('總計') || k.includes('除稅')));
+            orderFields.forEach(k => renderField(k));
+            amountFields.forEach(k => renderField(k, k.includes('金額') || k.includes('總計')));
 
             const modal = document.getElementById('detail-modal');
             const content = document.getElementById('modal-content');
