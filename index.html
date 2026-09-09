@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家具專員獎金計算 - 雲端連線版</title>
+    <title>家具專員獎金計算</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -22,53 +22,49 @@
         }
         .text-gold {
             color: #fbbf24;
-            text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+            text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
         }
         .text-gradient {
-            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            background: linear-gradient(to right, #60a5fa, #c084fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        /* 自訂滾動條 */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
-        /* Loading 動畫 */
         .loader {
             border: 3px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             border-top: 3px solid #3b82f6;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .row-alert {
+            background-color: rgba(127, 29, 29, 0.4) !important;
+            border-left: 4px solid #ef4444 !important;
+        }
+        .row-alert:hover {
+            background-color: rgba(127, 29, 29, 0.6) !important;
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-6 flex flex-col gap-6">
-
-    <div id="csv-warning" class="hidden bg-red-500/20 border border-red-500/50 rounded-xl p-4 flex items-start gap-3">
-        <svg class="w-6 h-6 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <div>
-            <h4 class="text-red-400 font-bold mb-1">尚未綁定 Google 試算表來源</h4>
-            <p class="text-sm text-red-200">請在程式碼中找到 <code class="bg-black/30 px-1 py-0.5 rounded text-amber-300 font-mono">const CSV_URL = 'YOUR_PUBLISHED_CSV_URL_HERE';</code>，並替換為您發佈成 CSV 的試算表網址。目前顯示的將是空資料。</p>
-        </div>
-    </div>
 
     <header class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
         <div>
             <div class="flex items-center gap-3">
                 <h1 class="text-3xl font-bold text-gradient tracking-wide">家具專員獎金計算</h1>
-                <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1">
-                    <span id="sync-status" class="block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    雲端連線版
+                <span class="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-full text-xs font-semibold flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    戰情室連線中
                 </span>
             </div>
-            <p class="text-slate-400 text-sm mt-1">讀取試算表資料，自動結算區間業績與累進獎金</p>
+            <p class="text-slate-400 text-sm mt-1">智慧抓取試算表，自動結算區間出貨業績與累進獎金</p>
         </div>
         
         <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
@@ -77,32 +73,33 @@
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </span>
-                <input type="text" id="search-input" placeholder="搜尋單號、姓名、手機、備註..." class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 transition-all shadow-inner">
+                <input type="text" id="search-input" placeholder="搜尋單號、姓名、手機、狀態..." class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 transition-all shadow-inner">
             </div>
 
-            <!-- 月份區間 -->
+            <!-- 月份區間篩選 -->
             <div class="glass-panel p-2.5 rounded-xl flex items-center gap-2">
                 <span class="text-xs text-slate-400 font-medium whitespace-nowrap">出貨區間:</span>
-                <input type="month" id="start-month" class="bg-slate-900 border border-slate-700 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
+                <input type="month" id="start-month" value="2026-09" class="bg-slate-900 border border-slate-700 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
                 <span class="text-slate-500">~</span>
-                <input type="month" id="end-month" class="bg-slate-900 border border-slate-700 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
+                <input type="month" id="end-month" value="2026-09" class="bg-slate-900 border border-slate-700 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
             </div>
             
-            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-colors shadow-lg" title="重新載入資料">
+            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-colors shadow-lg flex items-center gap-2" title="重新載入資料">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                <span class="text-sm font-medium hidden sm:inline">重整資料</span>
             </button>
         </div>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- 業績總計卡片 -->
+        <!-- 區間業績卡片 -->
         <div class="glass-panel rounded-2xl p-6 border-t-4 border-t-blue-500 relative overflow-hidden flex flex-col justify-center">
             <div class="flex justify-between items-start mb-2">
                 <h3 class="text-slate-300 font-medium text-sm flex items-center gap-2">
                     <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     區間出貨業績 (自動除稅後)
                 </h3>
-                <span id="order-count-badge" class="text-xs px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">載入中...</span>
+                <span id="order-count-badge" class="text-xs px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">...</span>
             </div>
             
             <div class="flex items-baseline gap-4 mt-2">
@@ -110,10 +107,9 @@
                 <span id="performance-status" class="text-sm text-slate-400 font-medium bg-slate-800 px-2 py-0.5 rounded">計算中...</span>
             </div>
             
-            <!-- 門檻進度條 -->
             <div class="mt-5">
                 <div class="flex justify-between text-xs text-slate-400 mb-1.5">
-                    <span>獎金門檻進度 (40萬)</span>
+                    <span>獎金門檻進度 (40萬) - <span class="italic opacity-70">跨月將合併顯示進度，但分開計薪</span></span>
                     <span id="progress-percent" class="font-mono">0%</span>
                 </div>
                 <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden shadow-inner">
@@ -124,23 +120,23 @@
 
         <!-- 獎金預估卡片 -->
         <div class="glass-panel rounded-2xl p-6 border-t-4 border-t-amber-400 relative overflow-hidden flex flex-col justify-center">
-            <div class="absolute -right-8 -top-8 w-32 h-32 bg-amber-500 rounded-full mix-blend-screen filter blur-[40px] opacity-20 pointer-events-none"></div>
+            <div class="absolute -right-8 -top-8 w-32 h-32 bg-amber-500 rounded-full mix-blend-screen filter blur-[40px] opacity-10 pointer-events-none"></div>
             
             <h3 class="text-slate-300 font-medium text-sm mb-2 flex items-center gap-2">
                 <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                預估個人獎金 (累進計算)
+                預估個人獎金 (按月獨立累進結算)
             </h3>
             
             <div class="text-5xl lg:text-6xl font-bold text-gold tracking-tight mt-2" id="total-bonus">$0</div>
             
             <div class="mt-5 flex gap-2 flex-wrap">
-                <span class="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700" id="tier-hint">當前最高級距: 未達標</span>
-                <span class="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700">未達40萬為0, 最高級距大於200萬為4%</span>
+                <span class="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20" id="tier-hint">當前最高級距: 未達標</span>
+                <span class="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700">公式：折扣前未稅業績 × (100%-折扣率) × 門檻級距</span>
             </div>
         </div>
     </div>
 
-    <div class="glass-panel rounded-2xl flex-1 overflow-hidden flex flex-col shadow-2xl">
+    <div class="glass-panel rounded-2xl flex-1 overflow-hidden flex flex-col shadow-2xl relative">
         <div class="p-4 border-b border-slate-700/50 flex flex-wrap justify-between items-center gap-4 bg-slate-800/40">
             <div class="flex items-center gap-2">
                 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -148,21 +144,22 @@
                 </svg>
                 <h2 class="font-semibold text-base text-white">出貨明細與業績清單</h2>
             </div>
-            <div id="loading-indicator" class="hidden items-center gap-2 text-sm text-blue-400">
+            <div id="loading-indicator" class="flex items-center gap-2 text-sm text-blue-400">
                 <div class="loader"></div> 資料載入中...
             </div>
         </div>
 
-        <div class="overflow-x-auto relative min-h-[200px]">
+        <div class="overflow-x-auto relative min-h-[300px]">
             <table class="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                     <tr class="bg-slate-900 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
                         <th class="p-4 font-medium">出貨日</th>
                         <th class="p-4 font-medium">單號</th>
                         <th class="p-4 font-medium">顧客姓名</th>
-                        <th class="p-4 font-medium text-right text-slate-300">總計 (含稅)</th>
-                        <th class="p-4 font-medium text-right text-blue-300">除稅額 (總計/1.05)</th>
-                        <th class="p-4 font-medium">備註</th>
+                        <th class="p-4 font-medium">狀態/運送</th>
+                        <th class="p-4 font-medium">貨押日</th>
+                        <th class="p-4 font-medium text-right text-slate-300">原訂單(扣非82)</th>
+                        <th class="p-4 font-medium text-right text-blue-300">除稅額(已折扣)</th>
                     </tr>
                 </thead>
                 <tbody id="table-body" class="divide-y divide-slate-700/50 text-sm">
@@ -170,13 +167,12 @@
                 </tbody>
             </table>
             
-            <!-- 空狀態 / 載入狀態 -->
-            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-10 bg-slate-900/90 backdrop-blur-sm z-10">
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-10 bg-slate-900/90 backdrop-blur-sm z-10 hidden">
                 <svg class="h-12 w-12 mb-3 opacity-30 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                 </svg>
                 <p class="text-slate-300 font-medium text-base">目前沒有符合條件的資料</p>
-                <p class="text-xs text-slate-500 mt-1">請調整篩選區間，或確認 CSV 連結是否正確且包含資料</p>
+                <p class="text-xs text-slate-500 mt-1">請調整上方的出貨區間，或確認關鍵字是否正確</p>
             </div>
         </div>
     </div>
@@ -196,6 +192,15 @@
             </div>
             
             <div class="p-6 space-y-5 bg-slate-900/50 max-h-[70vh] overflow-y-auto">
+                <!-- 警告區塊 (未排程且快到期) -->
+                <div id="modal-alert-box" class="hidden bg-red-500/20 border border-red-500/50 p-3 rounded-xl flex items-start gap-2">
+                    <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div>
+                        <p class="text-sm text-red-400 font-bold">倉儲定時炸彈警告！</p>
+                        <p class="text-xs text-red-200 mt-1">此單運送狀態為「未排程」，且貨押日已在 7 天內或已逾期，請盡速聯絡顧客確認交屋與送貨日！</p>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
                         <span class="text-xs text-slate-400 block mb-1">顧客姓名</span>
@@ -206,38 +211,23 @@
                         <span class="text-lg font-mono text-amber-400" id="modal-phone"></span>
                     </div>
                     <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
-                        <span class="text-xs text-slate-400 block mb-1">接單日</span>
-                        <span class="text-sm text-slate-200" id="modal-order-date"></span>
+                        <span class="text-xs text-slate-400 block mb-1">訂單狀態 / 運送狀態</span>
+                        <span class="text-sm text-slate-200" id="modal-status"></span>
                     </div>
-                    <div class="bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
-                        <span class="text-xs text-blue-300 block mb-1">出貨日</span>
-                        <span class="text-sm font-medium text-blue-100" id="modal-ship-date"></span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                     <div class="bg-slate-800/30 p-2 rounded border border-slate-700 text-center">
-                        <span class="text-[10px] text-slate-400 block">天數</span>
-                        <span class="text-sm text-slate-300" id="modal-days"></span>
-                    </div>
-                    <div class="bg-slate-800/30 p-2 rounded border border-slate-700 text-center">
-                        <span class="text-[10px] text-slate-400 block">82大類</span>
-                        <span class="text-sm text-slate-300" id="modal-82"></span>
-                    </div>
-                    <div class="bg-slate-800/30 p-2 rounded border border-slate-700 text-center">
-                        <span class="text-[10px] text-slate-400 block">非82大類</span>
-                        <span class="text-sm text-slate-300" id="modal-non82"></span>
+                    <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                        <span class="text-xs text-slate-400 block mb-1">貨押日</span>
+                        <span class="text-sm text-slate-200 font-medium" id="modal-push-date"></span>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-xl border border-slate-600 flex flex-col gap-2">
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-xl border border-slate-600 flex flex-col gap-3">
                     <div class="flex justify-between items-center pb-2 border-b border-slate-700">
-                        <span class="text-sm text-slate-300">總計 (含稅)</span>
-                        <span class="text-xl font-semibold text-white font-mono" id="modal-total"></span>
+                        <span class="text-sm text-slate-400">原訂單(扣非82) <br><span class="text-[10px] opacity-70">用於計算適用級距(需除以1.05)</span></span>
+                        <span class="text-lg font-semibold text-white font-mono" id="modal-pre-discount"></span>
                     </div>
                     <div class="flex justify-between items-center pt-1">
                         <span class="text-sm font-medium text-blue-400 flex items-center gap-1">
-                            單筆除稅額 (總計/1.05)
+                            除稅額 (計算獎金基數)
                         </span>
                         <span class="text-2xl font-bold text-blue-300 font-mono tracking-tight" id="modal-taxfree"></span>
                     </div>
@@ -250,97 +240,118 @@
             </div>
             
             <div class="p-4 border-t border-slate-700 bg-slate-800/90 flex justify-end">
-                <button onclick="closeModal()" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-sm font-medium transition-colors">關閉</button>
+                <button onclick="closeModal()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition-colors">確認</button>
             </div>
         </div>
     </div>
 
     <script>
-        // 🚨🚨🚨 請將這裡替換成您在 Google 試算表發佈為 CSV 的網址 🚨🚨🚨
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsiRtuRUot8LDq8j8rDjaWbGOyEj5w_E2GPYRmasu7WrSYLgECaYA9V5rAcbY-jcCVWWG2l_jKIWpU/pub?gid=1593533278&single=true&output=csv';
         
-        // 全域變數
         let rawData = [];
-        
-        // 初始化日期 (預設當月)
-        const today = new Date();
-        const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        document.getElementById('start-month').value = currentMonth;
-        document.getElementById('end-month').value = currentMonth;
+        const todayDate = new Date(); // 實際執行時會抓取使用者裝置的當下日期
 
         // 格式化新台幣
-        const formatTWD = (num) => {
-            return new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(num || 0);
-        };
+        const formatTWD = (num) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(num || 0);
 
-        // 清理數字字串 (移除逗號並轉為數值)
+        // 清理數字字串
         const parseNumber = (val) => {
             if (!val) return 0;
             const cleaned = String(val).replace(/,/g, '').trim();
             return isNaN(Number(cleaned)) ? 0 : Number(cleaned);
         };
 
-        // 將日期字串統一轉為 YYYY-MM 以便比較 (支援 YYYY/M/D 或 YYYY-MM-DD)
+        // 統一轉為 YYYY-MM 以便比較
         const getYYYYMM = (dateString) => {
             if (!dateString) return "";
-            let parts = dateString.split('/');
-            if (parts.length === 1) parts = dateString.split('-'); // 嘗試用 - 切割
+            let parts = String(dateString).split('/');
+            if (parts.length === 1) parts = String(dateString).split('-'); 
             if (parts.length < 2) return "";
-            
-            const year = parts[0];
-            const month = parts[1].padStart(2, '0');
-            return `${year}-${month}`;
+            return `${parts[0]}-${parts[1].padStart(2, '0')}`;
         };
 
-        // 累進獎金計算公式
-        function calculateTieredBonus(totalTaxFree) {
-            if (totalTaxFree < 400000) return 0;
+        // 判斷日期差異 (天數)
+        const getDaysDiffFromToday = (dateString) => {
+            if (!dateString) return 9999;
+            let parts = String(dateString).split('/');
+            if (parts.length === 1) parts = String(dateString).split('-');
+            if (parts.length < 3) return 9999;
+            
+            const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            const diffTime = targetDate - todayDate;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        };
 
-            let performance = totalTaxFree;
-            let totalBonus = 0;
+        // 模糊欄位對應函數：解決試算表標題包含空白或全半形不同的問題
+        const getValFuzzy = (row, keywords) => {
+            for (let key of Object.keys(row)) {
+                let cleanKey = key.replace(/\s+/g, '').toLowerCase(); // 移除所有空白
+                for (let kw of keywords) {
+                    if (cleanKey.includes(kw.toLowerCase())) {
+                        return row[key];
+                    }
+                }
+            }
+            return "";
+        };
 
-            // 超過 200 萬 (4.0%)
+        // 定義對應的關鍵字字典
+        const colMap = {
+            shipDate: ['出貨日', '交貨日'],
+            orderNo: ['單號', '訂單編號'],
+            name: ['顧客姓名', '姓名', '客戶'],
+            phone: ['手機', '電話', '聯絡方式'],
+            orderStatus: ['訂單狀態'],
+            shippingStatus: ['運送狀態', '送貨狀態'],
+            pushDate: ['貨押日', '到貨日'],
+            preDiscount: ['原訂單扣非82', '原訂單扣非'], // 用於算適用級距
+            postDiscountTaxFree: ['除稅額', '總計(除', '總計(扣除'], // 實際用來算獎金的基數 (已打折)
+            note: ['備註', '附註']
+        };
+
+        // 無情的獎金累進精算引擎 (完全依照圖表邏輯)
+        function calculateMonthlyBonus(preDiscountPreTax, postDiscountPreTax) {
+            // 未滿 40 萬吃土
+            if (preDiscountPreTax < 400000) return 0;
+
+            // 折扣保留比率 = 折扣後 / 折扣前
+            const ratio = preDiscountPreTax > 0 ? (postDiscountPreTax / preDiscountPreTax) : 1;
+            
+            let performance = preDiscountPreTax;
+            let bonus = 0;
+
+            // 超過 200萬 (4.0%)
             if (performance > 2000000) {
-                totalBonus += (performance - 2000000) * 0.040;
+                bonus += (performance - 2000000) * ratio * 0.040;
                 performance = 2000000;
             }
-            // 160 萬 ~ 200 萬 (3.5%)
+            // 160萬 ~ 200萬 (3.5%)
             if (performance > 1600000) {
-                totalBonus += (performance - 1600000) * 0.035;
+                bonus += (performance - 1600000) * ratio * 0.035;
                 performance = 1600000;
             }
-            // 120 萬 ~ 160 萬 (3.0%)
+            // 120萬 ~ 160萬 (3.0%)
             if (performance > 1200000) {
-                totalBonus += (performance - 1200000) * 0.030;
+                bonus += (performance - 1200000) * ratio * 0.030;
                 performance = 1200000;
             }
-            // 80 萬 ~ 120 萬 (2.5%)
+            // 80萬 ~ 120萬 (2.5%)
             if (performance > 800000) {
-                totalBonus += (performance - 800000) * 0.025;
+                bonus += (performance - 800000) * ratio * 0.025;
                 performance = 800000;
             }
-            // 40 萬 ~ 80 萬 (2.0%)
-            if (performance > 400000) {
-                totalBonus += (performance - 400000) * 0.020;
+            // 0萬 ~ 80萬 (2.0%) <-- 注意！圖表範例中是直接 799,999 * 2%
+            if (performance > 0) {
+                // 最大 80萬
+                const tier1Amount = Math.min(performance, 800000);
+                bonus += tier1Amount * ratio * 0.020;
             }
 
-            return Math.round(totalBonus);
+            return Math.round(bonus);
         }
 
         async function fetchData() {
-            const warningEl = document.getElementById('csv-warning');
             const loaderEl = document.getElementById('loading-indicator');
-            const syncStatus = document.getElementById('sync-status');
-            
-            if (CSV_URL === 'YOUR_PUBLISHED_CSV_URL_HERE') {
-                warningEl.classList.remove('hidden');
-                syncStatus.classList.remove('bg-emerald-400', 'animate-pulse');
-                syncStatus.classList.add('bg-red-500');
-                renderApp(); // 渲染空資料
-                return;
-            }
-            
-            warningEl.classList.add('hidden');
             loaderEl.classList.remove('hidden');
             loaderEl.classList.add('flex');
             
@@ -353,24 +364,20 @@
                     skipEmptyLines: true,
                     complete: function(results) {
                         rawData = results.data;
-                        console.log("成功讀取資料筆數:", rawData.length);
                         loaderEl.classList.add('hidden');
                         loaderEl.classList.remove('flex');
                         renderApp();
                     },
                     error: function(err) {
-                        console.error("CSV 解析錯誤:", err);
-                        alert("解析資料失敗，請確認 CSV 連結格式。");
+                        console.error("CSV 讀取錯誤:", err);
+                        alert("讀取資料失敗，這可能代表試算表權限沒有公開。");
                         loaderEl.classList.add('hidden');
                     }
                 });
             } catch (err) {
                 console.error("獲取資料失敗:", err);
                 loaderEl.classList.add('hidden');
-                // 這裡避免使用 alert 中斷體驗，將狀態反映在 UI 上
-                syncStatus.classList.remove('bg-emerald-400');
-                syncStatus.classList.add('bg-red-500');
-                document.getElementById('order-count-badge').textContent = '連線失敗';
+                alert("網路連線錯誤，無法獲取戰情室資料。");
             }
         }
 
@@ -379,57 +386,94 @@
             const endMonth = document.getElementById('end-month').value;     
             const keyword = document.getElementById('search-input').value.trim().toLowerCase();
 
-            // 1. 資料過濾 (出貨日區間 + 關鍵字)
-            const filtered = rawData.filter(row => {
-                const shipDate = row['出貨日'] || '';
+            // 1. 資料過濾與清洗
+            const processedData = rawData.map(row => {
+                const shipDate = getValFuzzy(row, colMap.shipDate);
                 const shipMonth = getYYYYMM(shipDate);
+                const preDiscountRaw = parseNumber(getValFuzzy(row, colMap.preDiscount));
+                const postDiscountPreTax = parseNumber(getValFuzzy(row, colMap.postDiscountTaxFree));
                 
-                // 檢查是否在月份區間內
-                let matchMonth = true;
-                if (startMonth && endMonth) {
-                    matchMonth = (shipMonth >= startMonth && shipMonth <= endMonth);
-                } else if (startMonth) {
-                    matchMonth = (shipMonth >= startMonth);
-                } else if (endMonth) {
-                    matchMonth = (shipMonth <= endMonth);
+                // 計算折扣前未稅 (原訂單扣非82 / 1.05)
+                const preDiscountPreTax = Math.round(preDiscountRaw / 1.05);
+
+                const shippingStatus = getValFuzzy(row, colMap.shippingStatus);
+                const pushDate = getValFuzzy(row, colMap.pushDate);
+                
+                // 判斷是否為「未排程炸彈」: 包含未排程 且 貨押日 <= 7天
+                let isAlert = false;
+                if (shippingStatus.includes('未') || shippingStatus.includes('排')) { 
+                    // 寬鬆比對: 如果字眼有未或排
+                    if (shippingStatus.includes('未排程') || shippingStatus === '未') {
+                        const daysDiff = getDaysDiffFromToday(pushDate);
+                        if (daysDiff <= 7) isAlert = true;
+                    }
                 }
+
+                return {
+                    originalRow: row,
+                    shipDate,
+                    shipMonth,
+                    orderNo: getValFuzzy(row, colMap.orderNo),
+                    name: getValFuzzy(row, colMap.name),
+                    phone: getValFuzzy(row, colMap.phone),
+                    orderStatus: getValFuzzy(row, colMap.orderStatus),
+                    shippingStatus,
+                    pushDate,
+                    preDiscountPreTax,
+                    postDiscountPreTax,
+                    note: getValFuzzy(row, colMap.note),
+                    isAlert
+                };
+            }).filter(item => item.shipMonth !== ""); // 過濾掉沒有出貨日的無效行
+
+            // 2. 應用篩選條件
+            const filtered = processedData.filter(item => {
+                // 月份區間
+                let matchMonth = true;
+                if (startMonth && endMonth) matchMonth = (item.shipMonth >= startMonth && item.shipMonth <= endMonth);
+                else if (startMonth) matchMonth = (item.shipMonth >= startMonth);
+                else if (endMonth) matchMonth = (item.shipMonth <= endMonth);
                 
                 if (!matchMonth) return false;
 
-                // 關鍵字搜尋 (合併多個欄位一起搜)
+                // 關鍵字搜尋
                 if (keyword) {
-                    const combinedText = `
-                        ${row['單號'] || ''} 
-                        ${row['顧客姓名'] || ''} 
-                        ${row['手機'] || ''} 
-                        ${row['備註'] || ''}
-                    `.toLowerCase();
+                    const combinedText = `${item.orderNo} ${item.name} ${item.phone} ${item.note} ${item.orderStatus} ${item.shippingStatus}`.toLowerCase();
                     return combinedText.includes(keyword);
                 }
-                
                 return true;
             });
 
-            // 2. 統計總金額與計算除稅後業績
-            let totalWithTax = 0;
-            filtered.forEach(row => {
-                totalWithTax += parseNumber(row['總計']);
-            });
-            
-            // 系統自動根據總計除以 1.05 作為除稅後業績 (四捨五入)
-            const totalTaxFree = Math.round(totalWithTax / 1.05);
+            // 3. 按月份分組結算 (精確計算獎金)
+            const monthlyStats = {};
+            let globalTotalPostTax = 0; // 用於儀表板總出貨金額顯示
 
-            // 3. 計算獎金
-            const finalBonus = calculateTieredBonus(totalTaxFree);
+            filtered.forEach(item => {
+                if (!monthlyStats[item.shipMonth]) {
+                    monthlyStats[item.shipMonth] = { preTotal: 0, postTotal: 0 };
+                }
+                monthlyStats[item.shipMonth].preTotal += item.preDiscountPreTax;
+                monthlyStats[item.shipMonth].postTotal += item.postDiscountPreTax;
+                globalTotalPostTax += item.postDiscountPreTax;
+            });
+
+            let totalBonus = 0;
+            let maxPreTaxInAMonth = 0; // 用來判斷當前達到的最高級距
+
+            for (let month in monthlyStats) {
+                const stats = monthlyStats[month];
+                totalBonus += calculateMonthlyBonus(stats.preTotal, stats.postTotal);
+                if (stats.preTotal > maxPreTaxInAMonth) maxPreTaxInAMonth = stats.preTotal;
+            }
 
             // 4. 更新儀表板 UI
-            document.getElementById('total-performance').textContent = formatTWD(totalTaxFree);
+            document.getElementById('total-performance').textContent = formatTWD(globalTotalPostTax);
             document.getElementById('order-count-badge').textContent = `${filtered.length} 筆資料`;
-            document.getElementById('total-bonus').textContent = formatTWD(finalBonus);
+            document.getElementById('total-bonus').textContent = formatTWD(totalBonus);
 
-            // 門檻進度條 (目標 40萬)
+            // 總門檻進度條 (單純視覺展示)
             const thresholdTarget = 400000;
-            let progressPercent = (totalTaxFree / thresholdTarget) * 100;
+            let progressPercent = (globalTotalPostTax / thresholdTarget) * 100;
             if (progressPercent > 100) progressPercent = 100;
             
             document.getElementById('progress-bar').style.width = progressPercent + '%';
@@ -438,27 +482,27 @@
             const perfStatusEl = document.getElementById('performance-status');
             const pBarEl = document.getElementById('progress-bar');
             
-            if (totalTaxFree >= thresholdTarget) {
-                perfStatusEl.textContent = '已過檻！達標分段獎金';
+            if (globalTotalPostTax >= thresholdTarget) {
+                perfStatusEl.textContent = '區間加總已過 40 萬門檻';
                 perfStatusEl.className = 'text-sm text-green-400 font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20';
                 pBarEl.classList.remove('from-blue-600', 'to-blue-400');
                 pBarEl.classList.add('from-green-500', 'to-green-400');
             } else {
-                const diff = thresholdTarget - totalTaxFree;
-                perfStatusEl.textContent = `差 ${formatTWD(diff)} 達 40 萬門檻`;
+                const diff = thresholdTarget - globalTotalPostTax;
+                perfStatusEl.textContent = `區間加總還差 ${formatTWD(diff)}`;
                 perfStatusEl.className = 'text-sm text-red-400 font-medium bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20';
                 pBarEl.classList.remove('from-green-500', 'to-green-400');
                 pBarEl.classList.add('from-blue-600', 'to-blue-400');
             }
 
-            // 更新級距提示
+            // 更新級距提示 (基於篩選出的月份中，表現最好的一個月)
             let maxTier = "未達標 (0%)";
-            if (totalTaxFree > 2000000) maxTier = "最高 4.0%";
-            else if (totalTaxFree > 1600000) maxTier = "最高 3.5%";
-            else if (totalTaxFree > 1200000) maxTier = "最高 3.0%";
-            else if (totalTaxFree > 800000) maxTier = "最高 2.5%";
-            else if (totalTaxFree >= 400000) maxTier = "最高 2.0%";
-            document.getElementById('tier-hint').textContent = `當前級距: ${maxTier}`;
+            if (maxPreTaxInAMonth > 2000000) maxTier = "最高 4.0%";
+            else if (maxPreTaxInAMonth > 1600000) maxTier = "最高 3.5%";
+            else if (maxPreTaxInAMonth > 1200000) maxTier = "最高 3.0%";
+            else if (maxPreTaxInAMonth > 800000) maxTier = "最高 2.5%";
+            else if (maxPreTaxInAMonth >= 400000) maxTier = "最高 2.0%";
+            document.getElementById('tier-hint').textContent = `單月最高級距: ${maxTier}`;
 
             // 5. 渲染表格
             const tbody = document.getElementById('table-body');
@@ -472,50 +516,63 @@
                 emptyState.classList.add('hidden');
                 emptyState.classList.remove('flex');
 
-                filtered.forEach((row, index) => {
-                    const rowTotal = parseNumber(row['總計']);
-                    const rowTaxFree = Math.round(rowTotal / 1.05);
-                    
+                filtered.forEach((item, index) => {
                     const tr = document.createElement('tr');
-                    tr.className = `hover:bg-slate-700/60 transition-colors cursor-pointer group`;
                     
-                    // 將資料存入 dataset 以供 Modal 使用
-                    tr.dataset.index = index;
-                    tr.onclick = () => openModal(row, rowTotal, rowTaxFree);
+                    // 根據警告狀態上色
+                    if (item.isAlert) {
+                        tr.className = `row-alert transition-colors cursor-pointer group`;
+                    } else {
+                        tr.className = `hover:bg-slate-700/60 transition-colors cursor-pointer group border-l-4 border-transparent`;
+                    }
+                    
+                    tr.onclick = () => openModal(item);
+
+                    // 狀態標籤樣式處理
+                    let statusBadge = `<span class="text-slate-400">${item.orderStatus || '-'} / ${item.shippingStatus || '-'}</span>`;
+                    if (item.isAlert) {
+                        statusBadge = `<span class="px-2 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-bold animate-pulse">未排程急件</span>`;
+                    } else if (item.shippingStatus.includes('排程') || item.shippingStatus.includes('已')) {
+                        statusBadge = `<span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-xs">${item.orderStatus} / ${item.shippingStatus}</span>`;
+                    }
 
                     tr.innerHTML = `
-                        <td class="p-4 text-slate-200">${row['出貨日'] || '-'}</td>
-                        <td class="p-4 font-mono text-blue-300 font-medium group-hover:text-blue-200 transition-colors">${row['單號'] || '-'}</td>
-                        <td class="p-4 text-white font-medium">${row['顧客姓名'] || '-'}</td>
-                        <td class="p-4 text-right text-slate-300">${formatTWD(rowTotal)}</td>
-                        <td class="p-4 text-right font-mono font-semibold text-blue-300">${formatTWD(rowTaxFree)}</td>
-                        <td class="p-4 text-slate-400 text-xs max-w-[200px] truncate" title="${row['備註'] || ''}">${row['備註'] || '<span class="text-slate-600">-</span>'}</td>
+                        <td class="p-4 text-slate-200">${item.shipDate || '-'}</td>
+                        <td class="p-4 font-mono text-blue-300 font-medium group-hover:text-blue-200 transition-colors">${item.orderNo || '-'}</td>
+                        <td class="p-4 text-white font-medium">${item.name || '-'}</td>
+                        <td class="p-4">${statusBadge}</td>
+                        <td class="p-4 text-slate-300 ${item.isAlert ? 'font-bold text-red-300' : ''}">${item.pushDate || '-'}</td>
+                        <td class="p-4 text-right text-slate-400">${formatTWD(item.preDiscountPreTax * 1.05)}</td>
+                        <td class="p-4 text-right font-mono font-semibold text-blue-300">${formatTWD(item.postDiscountPreTax)}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             }
         }
 
-        function openModal(row, total, taxFree) {
-            document.getElementById('modal-order-no').textContent = `單號: ${row['單號'] || '無'}`;
-            document.getElementById('modal-name').textContent = row['顧客姓名'] || '-';
-            document.getElementById('modal-phone').textContent = row['手機'] || '-';
-            document.getElementById('modal-order-date').textContent = row['接單日'] || '-';
-            document.getElementById('modal-ship-date').textContent = row['出貨日'] || '-';
+        function openModal(item) {
+            document.getElementById('modal-order-no').textContent = `單號: ${item.orderNo || '無'}`;
+            document.getElementById('modal-name').textContent = item.name || '-';
+            document.getElementById('modal-phone').textContent = item.phone || '-';
+            document.getElementById('modal-status').textContent = `${item.orderStatus || '-'} / ${item.shippingStatus || '-'}`;
+            document.getElementById('modal-push-date').textContent = item.pushDate || '-';
             
-            document.getElementById('modal-days').textContent = row['天數'] || '-';
-            document.getElementById('modal-82').textContent = formatTWD(parseNumber(row['82大類']));
-            document.getElementById('modal-non82').textContent = formatTWD(parseNumber(row['非82大類']));
+            document.getElementById('modal-pre-discount').textContent = formatTWD(item.preDiscountPreTax * 1.05);
+            document.getElementById('modal-taxfree').textContent = formatTWD(item.postDiscountPreTax);
+            document.getElementById('modal-note').textContent = item.note || '無備註';
 
-            document.getElementById('modal-total').textContent = formatTWD(total);
-            document.getElementById('modal-taxfree').textContent = formatTWD(taxFree);
-            document.getElementById('modal-note').textContent = row['備註'] || '無備註';
+            const alertBox = document.getElementById('modal-alert-box');
+            if (item.isAlert) {
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
 
             const modal = document.getElementById('detail-modal');
             const content = document.getElementById('modal-content');
             
             modal.classList.remove('hidden');
-            void modal.offsetWidth; // 觸發重繪
+            void modal.offsetWidth;
             modal.classList.remove('opacity-0');
             content.classList.remove('scale-95');
         }
@@ -540,12 +597,11 @@
         document.getElementById('detail-modal').addEventListener('click', (e) => {
             if (e.target.id === 'detail-modal') closeModal();
         });
-
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeModal();
         });
 
-        // 初始啟動
+        // 初始載入
         fetchData();
 
     </script>
