@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家具專員獎金計算 (極簡 2% 完整版)</title>
+    <!-- 金錢圖示 Favicon -->
+    <link rel="apple-touch-icon" href="data:image/png;base64,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">
+    <link rel="icon" href="data:image/png;base64,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" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
@@ -18,7 +21,7 @@
         <header class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
             <div class="flex items-center gap-3">
                 <h1 class="text-3xl font-bold text-gradient tracking-wide">家具專員獎金計算</h1>
-                <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1">
+                <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
                     <span id="sync-status" class="block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     極簡暴力 2% 版
                 </span>
@@ -27,12 +30,17 @@
             <div class="flex flex-wrap gap-3 items-center w-full xl:w-auto">
                 <div class="relative w-full md:w-64">
                     <input type="text" id="search-input" placeholder="搜尋單號、姓名、手機、備註..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                    <svg class="w-4 h-4 absolute left-3 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
                 <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg p-1 w-full md:w-auto">
-                    <span class="text-xs text-slate-400 pl-2">出貨區間:</span>
-                    <input type="month" id="start-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5">
+                    <span class="text-xs text-slate-400 pl-2 whitespace-nowrap">出貨區間:</span>
+                    <input type="month" id="start-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto">
                     <span class="text-slate-500">-</span>
-                    <input type="month" id="end-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5">
+                    <input type="month" id="end-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto">
+                    <!-- 新增的「搜尋全部」按鈕，解開時間封印 -->
+                    <button onclick="clearDateRange()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded transition-colors whitespace-nowrap" title="清空區間，搜尋所有歷史資料">
+                        搜尋全部
+                    </button>
                 </div>
             </div>
         </header>
@@ -117,7 +125,7 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsiRtuRUot8LDq8j8rDjaWbGOyEj5w_E2GPYRmasu7WrSYLgECaYA9V5rAcbY-jcCVWWG2l_jKIWpU/pub?gid=1593533278&single=true&output=csv';
 
         let rawData = [];
-        let currentFilteredData = []; // 用來儲存目前畫面上顯示的資料列，給 Modal 用的
+        let currentFilteredData = [];
         const today = new Date();
         const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('start-month').value = currentMonth;
@@ -152,10 +160,16 @@
             return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         };
 
-        // 暴力 2% 計算
         function calculateSimpleBonus(taxFree) {
             if (taxFree < 400000) return 0;
             return taxFree * 0.02;
+        }
+        
+        // 點擊「搜尋全部」時觸發：清空日期，觸發搜尋
+        function clearDateRange() {
+            document.getElementById('start-month').value = '';
+            document.getElementById('end-month').value = '';
+            filterAndRender();
         }
 
         function fetchData() {
@@ -184,15 +198,17 @@
                 const dateKey = findKey(row, ['出貨日', '出貨日期']);
                 const outDate = dateKey ? row[dateKey] : '';
                 const yyyyMM = standardizeDate(outDate);
-                // 自動略過沒有出貨日的廢資料或空白行
                 if (!yyyyMM || yyyyMM.length < 6) return false;
                 
-                let isDateInRange = (startMonth && endMonth) ? (yyyyMM >= startMonth && yyyyMM <= endMonth) : true;
+                // 如果開始跟結束時間都有填，才限制範圍；只要清空一個，就放行全搜
+                let isDateInRange = true;
+                if (startMonth && endMonth) {
+                    isDateInRange = (yyyyMM >= startMonth && yyyyMM <= endMonth);
+                }
+                
                 return isDateInRange && Object.values(row).join(' ').toLowerCase().includes(searchKeyword);
             }).map(row => {
                 const totalKey = findKey(row, ['總計', '總額']);
-                
-                // 業績直接用總計除以 1.05
                 const taxFree = parseNumber(totalKey ? row[totalKey] : '0') / 1.05;
 
                 const dateKey = findKey(row, ['出貨日', '出貨日期']);
@@ -249,10 +265,8 @@
             currentFilteredData.forEach((row, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-700/30 transition-colors cursor-pointer group';
-                // 這裡綁定點擊事件，傳入 index
                 tr.onclick = () => openModal(index);
 
-                // 7天奪命催魂 Alert 邏輯
                 let pledgeAlert = '';
                 if (row._mappedTransport.includes('未排程')) {
                     const days = getDaysDiff(row._mappedPledge);
@@ -281,20 +295,18 @@
 
         function openModal(index) {
             const data = currentFilteredData[index];
-            if(!data) return; // 找不到資料就直接放生
+            if(!data) return;
 
             document.getElementById('modal-order-id').innerText = `單號: ${data._mappedOrder || '無'}`;
             
             const modalBody = document.getElementById('modal-body');
-            modalBody.innerHTML = ''; // 清空之前的內容
+            modalBody.innerHTML = '';
             
-            // 這裡設定你要在彈出視窗裡顯示的欄位標題關鍵字
             const orderFields = ['顧客姓名', '手機', '訂單狀態', '運送狀態', '接單日', '出貨日', '時間', '貨押日', '備註'];
-            const amountFields = ['82+28大類', '66大類', '總計', '除稅額']; // 既然清爽版，我們就挑這些重點
+            const amountFields = ['82+28大類', '66大類', '總計', '除稅額']; 
 
-            // 負責產生 HTML 結構的工具人函數
             const renderField = (key, value, highlight = false) => {
-                if(value === undefined || value === '') return; // 沒資料就不顯示，別佔空間
+                if(value === undefined || value === '') return;
                 const div = document.createElement('div');
                 div.className = 'flex flex-col gap-1';
                 div.innerHTML = `
@@ -304,22 +316,18 @@
                 modalBody.appendChild(div);
             };
 
-            // 依序把客資倒進去
             orderFields.forEach(k => {
                 const foundKey = findKey(data, [k]);
                 if (foundKey) renderField(k, data[foundKey]);
             });
             
-            // 手動安插最重要的核心數據：除稅後業績
             renderField('除稅後業績 (系統計算)', formatTWD(data._taxFree), true);
             
-            // 把金額相關的也倒進去
             amountFields.forEach(k => {
                 const foundKey = findKey(data, [k]);
                 if (foundKey) renderField(k, data[foundKey], k.includes('總計'));
             });
 
-            // 呼叫視窗出來接客
             const modal = document.getElementById('detail-modal');
             const content = document.getElementById('modal-content');
             modal.classList.remove('hidden');
