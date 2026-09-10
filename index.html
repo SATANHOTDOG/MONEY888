@@ -38,7 +38,6 @@
                     <input type="month" id="start-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto">
                     <span class="text-slate-500">-</span>
                     <input type="month" id="end-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto">
-                    <!-- 新增的「搜尋全部」按鈕，解開時間封印 -->
                     <button onclick="clearDateRange()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded transition-colors whitespace-nowrap" title="清空區間，搜尋所有歷史資料">
                         搜尋全部
                     </button>
@@ -138,10 +137,15 @@
             const cleaned = String(val).replace(/,/g, '').replace(/\$/g, '').trim();
             return isNaN(Number(cleaned)) ? 0 : Number(cleaned);
         };
+        
+        // 暴力升級版日期解析，無視橫線、斜線、小數點
         const standardizeDate = (dateStr) => {
             if (!dateStr) return '';
-            const parts = String(dateStr).split('/');
-            return parts.length >= 2 ? `${parts[0]}-${parts[1].padStart(2, '0')}` : String(dateStr).trim();
+            const match = String(dateStr).match(/(\d{4})[^\d]+(\d{1,2})/);
+            if (match) {
+                return `${match[1]}-${match[2].padStart(2, '0')}`;
+            }
+            return String(dateStr).trim();
         };
 
         const findKey = (row, keywords) => {
@@ -155,7 +159,15 @@
 
         const getDaysDiff = (dateStr) => {
             if (!dateStr) return null;
-            const d = new Date(dateStr);
+            // 這裡也套用暴力正則處理一下貨押日，免得算不出天數
+            const match = String(dateStr).match(/(\d{4})[^\d]+(\d{1,2})[^\d]+(\d{1,2})/);
+            let d;
+            if (match) {
+                d = new Date(`${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`);
+            } else {
+                d = new Date(dateStr);
+            }
+            
             if (isNaN(d.getTime())) return null;
             const diffTime = d - today;
             return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -267,11 +279,17 @@
                 tr.onclick = () => openModal(index);
 
                 let pledgeAlert = '';
-                if (row._mappedTransport.includes('未排程')) {
+                if (String(row._mappedTransport).includes('未排程')) {
                     const days = getDaysDiff(row._mappedPledge);
                     if (days !== null && days <= 7 && days >= -30) {
                         pledgeAlert = `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">即將到貨</span>`;
                     }
+                }
+
+                // 黃金結案框邏輯
+                let statusStyle = "bg-slate-700/50 text-slate-400 border-slate-600";
+                if (String(row._mappedStatus).includes('已結案')) {
+                    statusStyle = "bg-yellow-500/20 text-yellow-300 border-yellow-500/80 shadow-[0_0_8px_rgba(234,179,8,0.25)] font-bold";
                 }
 
                 tr.innerHTML = `
@@ -279,7 +297,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">${row._mappedOrder}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedCustomer}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 bg-slate-700/50 rounded text-xs text-slate-400 border border-slate-600">${row._mappedStatus} / ${row._mappedTransport}</span>
+                        <span class="px-2 py-1 rounded text-xs border ${statusStyle}">${row._mappedStatus} / ${row._mappedTransport}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedPledge}${pledgeAlert}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-emerald-400 font-mono group-hover:font-bold">${formatTWD(row._taxFree)}</td>
