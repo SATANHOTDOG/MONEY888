@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家具專員獎金計算</title>
+    <title>家具專員獎金計算 (極簡 2% 版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
@@ -20,7 +20,7 @@
                 <h1 class="text-3xl font-bold text-gradient tracking-wide">家具專員獎金計算</h1>
                 <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1">
                     <span id="sync-status" class="block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    雲端連線版
+                    極簡暴力 2% 版
                 </span>
             </div>
             
@@ -54,22 +54,13 @@
 
             <div class="bg-slate-800 p-6 rounded-xl border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)] relative overflow-hidden group">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
-                <h3 class="text-amber-400/80 text-sm font-semibold mb-2 flex items-center gap-2">預估個人獎金 (按月獨立累進結算)</h3>
+                <h3 class="text-amber-400/80 text-sm font-semibold mb-2 flex items-center gap-2">預估個人獎金 (按月獨立結算)</h3>
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
                     <span id="total-bonus" class="text-5xl font-black text-amber-400 tracking-tight">$0</span>
-                    
-                    <!-- 官方折扣率強制覆蓋器 -->
-                    <div class="flex flex-col gap-1 bg-slate-900/80 p-2.5 rounded-lg border border-amber-500/30 z-10">
-                        <span class="text-[10px] text-amber-500/80 font-bold tracking-wider">POS 官方折扣率覆蓋</span>
-                        <div class="flex items-center gap-2">
-                            <input type="number" id="manual-discount" step="0.01" class="bg-slate-800 border border-slate-600 rounded text-amber-300 w-16 text-center text-sm py-1 focus:border-amber-400 focus:outline-none placeholder-slate-500" placeholder="自動">
-                            <span class="text-sm text-slate-400">%</span>
-                        </div>
-                    </div>
                 </div>
-                <div class="flex items-center gap-2 mt-4">
-                    <span id="tier-badge" class="px-2.5 py-1 bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded text-xs font-semibold">當月最高級距: 計算中</span>
-                    <span class="text-[10px] text-slate-500">公式: 全月除稅額 × (100% - 套用折扣率) × 門檻級距</span>
+                <div class="flex items-center gap-2 mt-8">
+                    <span class="px-2.5 py-1 bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded text-xs font-semibold">暴力計算法: 全額 2.0%</span>
+                    <span class="text-[10px] text-slate-500">公式: 全月除稅額 × 2% (達標 40 萬起算)</span>
                 </div>
             </div>
         </div>
@@ -89,7 +80,6 @@
                             <th class="px-6 py-4 font-semibold">顧客姓名</th>
                             <th class="px-6 py-4 font-semibold">狀態/運送</th>
                             <th class="px-6 py-4 font-semibold">貨押日</th>
-                            <th class="px-6 py-4 font-semibold text-right">折扣率</th>
                             <th class="px-6 py-4 font-semibold text-right">除稅後業績</th>
                         </tr>
                     </thead>
@@ -152,39 +142,18 @@
             return null;
         };
 
-        // 核心獎金計算 (支援手動強制覆蓋折扣率)
-        function calculateTierBonus(taxFree, totalRawSales, totalDiscountAmt) {
-            if (taxFree < 400000) return 0;
-            
-            let finalDiscountRate = 0;
-            const manualInput = document.getElementById('manual-discount').value;
-            
-            if (manualInput !== '' && !isNaN(manualInput)) {
-                finalDiscountRate = parseFloat(manualInput) / 100;
-            } else {
-                finalDiscountRate = totalRawSales > 0 ? (totalDiscountAmt / totalRawSales) : 0;
-            }
-            
-            let effective = taxFree * (1 - finalDiscountRate);
-            let ratio = taxFree > 0 ? (effective / taxFree) : 0;
-            let bonus = 0;
-            
-            bonus += Math.min(taxFree, 799999) * ratio * 0.02;
-            bonus += Math.max(0, Math.min(taxFree, 1199999) - 799999) * ratio * 0.025;
-            bonus += Math.max(0, Math.min(taxFree, 1599999) - 1199999) * ratio * 0.03;
-            bonus += Math.max(0, Math.min(taxFree, 1999999) - 1599999) * ratio * 0.035;
-            bonus += Math.max(0, taxFree - 1999999) * ratio * 0.04;
-            
-            return bonus;
-        }
+        const getDaysDiff = (dateStr) => {
+            if (!dateStr) return null;
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return null;
+            const diffTime = d - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        };
 
-        function getHighestTierRate(taxFree) {
-            if (taxFree < 400000) return '未達標 (0%)';
-            if (taxFree < 800000) return '最高 2.0%';
-            if (taxFree < 1200000) return '最高 2.5%';
-            if (taxFree < 1600000) return '最高 3.0%';
-            if (taxFree < 2000000) return '最高 3.5%';
-            return '最高 4.0%';
+        // 暴力 2% 計算
+        function calculateSimpleBonus(taxFree) {
+            if (taxFree < 400000) return 0;
+            return taxFree * 0.02;
         }
 
         function fetchData() {
@@ -208,7 +177,6 @@
             let monthlyStats = {};
             let globalTotalTaxFree = 0;
             let globalTotalBonus = 0;
-            let highestGlobalTaxFree = 0;
 
             const filteredData = rawData.filter(row => {
                 const dateKey = findKey(row, ['出貨日', '出貨日期']);
@@ -220,28 +188,21 @@
                 return isDateInRange && Object.values(row).join(' ').toLowerCase().includes(searchKeyword);
             }).map(row => {
                 const totalKey = findKey(row, ['總計', '總額']);
-                const rawSalesKey = findKey(row, ['原訂單扣非82', '原訂單金額']); 
-                const discountKey = findKey(row, ['折扣率', '折價率']);
-                const dateKey = findKey(row, ['出貨日', '出貨日期']);
                 
+                // 業績直接用總計除以 1.05
                 const taxFree = parseNumber(totalKey ? row[totalKey] : '0') / 1.05;
-                const rawSales = parseNumber(rawSalesKey ? row[rawSalesKey] : '0');
-                const discountStr = discountKey ? row[discountKey] : '0';
-                const discountRate = parseFloat(String(discountStr).replace('%', '')) / 100 || 0;
-                const discountAmt = rawSales * discountRate;
 
+                const dateKey = findKey(row, ['出貨日', '出貨日期']);
                 const yyyyMM = standardizeDate(dateKey ? row[dateKey] : '');
+                
                 if (yyyyMM) {
-                    if (!monthlyStats[yyyyMM]) monthlyStats[yyyyMM] = { taxFree: 0, rawSales: 0, discountAmt: 0 };
+                    if (!monthlyStats[yyyyMM]) monthlyStats[yyyyMM] = { taxFree: 0 };
                     monthlyStats[yyyyMM].taxFree += taxFree;
-                    monthlyStats[yyyyMM].rawSales += rawSales;
-                    monthlyStats[yyyyMM].discountAmt += discountAmt;
                 }
 
                 return { 
                     ...row, 
                     _taxFree: taxFree, 
-                    _discountRateStr: discountStr,
                     _mappedStatus: findKey(row, ['訂單狀態']) ? row[findKey(row, ['訂單狀態'])] : '-',
                     _mappedTransport: findKey(row, ['運送狀態']) ? row[findKey(row, ['運送狀態'])] : '-',
                     _mappedPledge: findKey(row, ['貨押日']) ? row[findKey(row, ['貨押日'])] : '-',
@@ -254,8 +215,7 @@
             for (const month in monthlyStats) {
                 const stats = monthlyStats[month];
                 globalTotalTaxFree += stats.taxFree;
-                globalTotalBonus += calculateTierBonus(stats.taxFree, stats.rawSales, stats.discountAmt);
-                if (stats.taxFree > highestGlobalTaxFree) highestGlobalTaxFree = stats.taxFree;
+                globalTotalBonus += calculateSimpleBonus(stats.taxFree);
             }
 
             document.getElementById('total-revenue').innerText = formatTWD(globalTotalTaxFree);
@@ -272,7 +232,6 @@
                 thresholdStatus.className = 'mb-1 text-sm font-medium px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 border border-red-500/30';
                 document.getElementById('progress-bar').classList.replace('bg-emerald-500', 'bg-blue-500');
             }
-            document.getElementById('tier-badge').innerText = `當月最高級距: ${getHighestTierRate(highestGlobalTaxFree)}`;
 
             const tbody = document.getElementById('table-body');
             document.getElementById('record-count').innerText = `${filteredData.length} 筆資料`;
@@ -288,6 +247,16 @@
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-700/30 transition-colors cursor-pointer group';
                 tr.onclick = () => openModal(index);
+
+                // 7天奪命催魂 Alert 邏輯
+                let pledgeAlert = '';
+                if (row._mappedTransport.includes('未排程')) {
+                    const days = getDaysDiff(row._mappedPledge);
+                    if (days !== null && days <= 7 && days >= -30) {
+                        pledgeAlert = `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">即將到貨</span>`;
+                    }
+                }
+
                 tr.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-slate-300 font-medium">${row._mappedDate}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">${row._mappedOrder}</td>
@@ -295,9 +264,8 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 bg-slate-700/50 rounded text-xs text-slate-400 border border-slate-600">${row._mappedStatus} / ${row._mappedTransport}</span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedPledge}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-amber-400/80">${row._discountRateStr}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-slate-300 font-mono group-hover:font-bold">${formatTWD(row._taxFree)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedPledge}${pledgeAlert}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-emerald-400 font-mono group-hover:font-bold">${formatTWD(row._taxFree)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -306,10 +274,8 @@
         document.getElementById('search-input').addEventListener('input', filterAndRender);
         document.getElementById('start-month').addEventListener('change', filterAndRender);
         document.getElementById('end-month').addEventListener('change', filterAndRender);
-        document.getElementById('manual-discount').addEventListener('input', filterAndRender);
 
         function openModal(index) {
-            // Modal logic unchanged
             const modal = document.getElementById('detail-modal');
             modal.classList.remove('hidden');
             setTimeout(() => modal.classList.remove('opacity-0'), 10);
