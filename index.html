@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家具專員獎金計算 (極簡 2% 版)</title>
+    <title>家具專員獎金計算 (極簡 2% 完整版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
@@ -102,7 +102,7 @@
                     <p id="modal-order-id" class="text-sm text-slate-400 font-mono mt-1"></p>
                 </div>
                 <button onclick="closeModal()" class="text-slate-400 hover:text-white transition-colors bg-slate-700 hover:bg-slate-600 p-2 rounded-full">
-                    ✕
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <div class="p-6 grid grid-cols-2 gap-x-8 gap-y-6" id="modal-body"></div>
@@ -113,9 +113,11 @@
     </div>
 
     <script>
+        // 🚨 這裡要放你最新的那串網址 🚨
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsiRtuRUot8LDq8j8rDjaWbGOyEj5w_E2GPYRmasu7WrSYLgECaYA9V5rAcbY-jcCVWWG2l_jKIWpU/pub?gid=1593533278&single=true&output=csv';
 
         let rawData = [];
+        let currentFilteredData = []; // 用來儲存目前畫面上顯示的資料列，給 Modal 用的
         const today = new Date();
         const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('start-month').value = currentMonth;
@@ -163,7 +165,7 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     rawData = results.data;
-                    document.getElementById('sync-status').classList.replace('bg-emerald-400', 'bg-emerald-400');
+                    document.getElementById('sync-status').classList.replace('bg-amber-400', 'bg-emerald-400');
                     filterAndRender();
                 }
             });
@@ -178,10 +180,11 @@
             let globalTotalTaxFree = 0;
             let globalTotalBonus = 0;
 
-            const filteredData = rawData.filter(row => {
+            currentFilteredData = rawData.filter(row => {
                 const dateKey = findKey(row, ['出貨日', '出貨日期']);
                 const outDate = dateKey ? row[dateKey] : '';
                 const yyyyMM = standardizeDate(outDate);
+                // 自動略過沒有出貨日的廢資料或空白行
                 if (!yyyyMM || yyyyMM.length < 6) return false;
                 
                 let isDateInRange = (startMonth && endMonth) ? (yyyyMM >= startMonth && yyyyMM <= endMonth) : true;
@@ -234,18 +237,19 @@
             }
 
             const tbody = document.getElementById('table-body');
-            document.getElementById('record-count').innerText = `${filteredData.length} 筆資料`;
+            document.getElementById('record-count').innerText = `${currentFilteredData.length} 筆資料`;
             tbody.innerHTML = '';
             
-            if (filteredData.length === 0) {
+            if (currentFilteredData.length === 0) {
                 document.getElementById('empty-state').classList.replace('hidden', 'flex');
                 return;
             }
             document.getElementById('empty-state').classList.replace('flex', 'hidden');
 
-            filteredData.forEach((row, index) => {
+            currentFilteredData.forEach((row, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-700/30 transition-colors cursor-pointer group';
+                // 這裡綁定點擊事件，傳入 index
                 tr.onclick = () => openModal(index);
 
                 // 7天奪命催魂 Alert 邏輯
@@ -276,14 +280,63 @@
         document.getElementById('end-month').addEventListener('change', filterAndRender);
 
         function openModal(index) {
+            const data = currentFilteredData[index];
+            if(!data) return; // 找不到資料就直接放生
+
+            document.getElementById('modal-order-id').innerText = `單號: ${data._mappedOrder || '無'}`;
+            
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = ''; // 清空之前的內容
+            
+            // 這裡設定你要在彈出視窗裡顯示的欄位標題關鍵字
+            const orderFields = ['顧客姓名', '手機', '訂單狀態', '運送狀態', '接單日', '出貨日', '時間', '貨押日', '備註'];
+            const amountFields = ['82+28大類', '66大類', '總計', '除稅額']; // 既然清爽版，我們就挑這些重點
+
+            // 負責產生 HTML 結構的工具人函數
+            const renderField = (key, value, highlight = false) => {
+                if(value === undefined || value === '') return; // 沒資料就不顯示，別佔空間
+                const div = document.createElement('div');
+                div.className = 'flex flex-col gap-1';
+                div.innerHTML = `
+                    <span class="text-xs text-slate-500 uppercase tracking-wider">${key}</span>
+                    <span class="text-sm ${highlight ? 'text-blue-400 font-mono text-base' : 'text-slate-200'}">${value}</span>
+                `;
+                modalBody.appendChild(div);
+            };
+
+            // 依序把客資倒進去
+            orderFields.forEach(k => {
+                const foundKey = findKey(data, [k]);
+                if (foundKey) renderField(k, data[foundKey]);
+            });
+            
+            // 手動安插最重要的核心數據：除稅後業績
+            renderField('除稅後業績 (系統計算)', formatTWD(data._taxFree), true);
+            
+            // 把金額相關的也倒進去
+            amountFields.forEach(k => {
+                const foundKey = findKey(data, [k]);
+                if (foundKey) renderField(k, data[foundKey], k.includes('總計'));
+            });
+
+            // 呼叫視窗出來接客
             const modal = document.getElementById('detail-modal');
+            const content = document.getElementById('modal-content');
             modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
         }
+        
         function closeModal() {
             const modal = document.getElementById('detail-modal');
+            const content = document.getElementById('modal-content');
             modal.classList.add('opacity-0');
-            setTimeout(() => modal.classList.add('hidden'), 200);
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
         }
 
         window.onload = fetchData;
