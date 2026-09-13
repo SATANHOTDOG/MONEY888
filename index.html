@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家具專員獎金計算 (極簡 2% 完整版)</title>
+    <title>家具專員獎金計算 (精準日期防禦版)</title>
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     
@@ -29,9 +29,9 @@
                 <h1 class="text-3xl font-bold text-gradient tracking-wide">家具專員獎金計算</h1>
                 <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
                     <span id="sync-status" class="block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    極簡暴力 2% 版
+                    精準日期防禦版
                 </span>
-                <!-- 🔥 新增的頂部奪命警報藥丸 (預設隱藏) 🔥 -->
+                <!-- 頂部奪命警報藥丸 -->
                 <span id="top-alert-badge" onclick="document.querySelector('.alert-container').scrollIntoView({behavior: 'smooth'})" class="hidden px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/30 rounded-full text-xs font-bold items-center gap-1 whitespace-nowrap shadow-[0_0_10px_rgba(239,68,68,0.2)] cursor-pointer hover:bg-red-500/20 transition-colors" title="點擊直達地獄警報區">
                     <span class="block w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                     未排程到貨警示
@@ -40,14 +40,21 @@
             
             <div class="flex flex-wrap gap-3 items-center w-full xl:w-auto">
                 <div class="relative w-full md:w-64">
-                    <input type="text" id="search-input" placeholder="搜尋單號、姓名、手機、備註..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                    <input type="text" id="search-input" placeholder="搜尋單號, 姓名, 手機, 備註..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
                     <svg class="w-4 h-4 absolute left-3 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
                 <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg p-1 w-full md:w-auto">
                     <span class="text-xs text-slate-400 pl-2 whitespace-nowrap">出貨區間:</span>
-                    <input type="month" id="start-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto">
+                    <!-- 🔥 改成 type="date" 精準到天 🔥 -->
+                    <input type="date" id="start-date" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto">
                     <span class="text-slate-500">-</span>
-                    <input type="month" id="end-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto">
+                    <input type="date" id="end-date" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto">
+                    
+                    <!-- 實體執行按鈕 -->
+                    <button onclick="filterAndRender()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors whitespace-nowrap shadow">
+                        執行
+                    </button>
+                    <!-- 搜尋全部按鈕 -->
                     <button onclick="clearDateRange()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded transition-colors whitespace-nowrap" title="清空區間，搜尋所有歷史資料">
                         搜尋全部
                     </button>
@@ -67,7 +74,7 @@
                 <div class="w-full bg-slate-900 rounded-full h-2 mb-2 border border-slate-700">
                     <div id="progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
                 </div>
-                <p class="text-xs text-slate-500">獎金門檻進度 (40萬) - 跨月將合併顯示進度，但分開計算</p>
+                <p class="text-xs text-slate-500">獎金門檻進度 (40萬) - 畫面依日期過濾，獎金依所屬月份獨立結算</p>
             </div>
 
             <div class="bg-slate-800 p-6 rounded-xl border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)] relative overflow-hidden group">
@@ -169,9 +176,18 @@
 
         let rawData = [];
         const today = new Date();
-        const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        document.getElementById('start-month').value = currentMonth;
-        document.getElementById('end-month').value = currentMonth;
+        const y = today.getFullYear();
+        const m = today.getMonth();
+        
+        // 🔥 自動預設為「當月 1 號」到「當月最後一天」 🔥
+        const formatDateForInput = (date) => {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        };
+        const firstDay = new Date(y, m, 1);
+        const lastDay = new Date(y, m + 1, 0);
+
+        document.getElementById('start-date').value = formatDateForInput(firstDay);
+        document.getElementById('end-date').value = formatDateForInput(lastDay);
 
         const formatTWD = (num) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(num);
         const parseNumber = (val) => {
@@ -180,11 +196,16 @@
             return isNaN(Number(cleaned)) ? 0 : Number(cleaned);
         };
         
-        const standardizeDate = (dateStr) => {
+        // 🔥 日期標準化：完美解析成 YYYY-MM-DD 格式，供天數區間過濾使用 🔥
+        const standardizeDateToDay = (dateStr) => {
             if (!dateStr) return '';
-            const match = String(dateStr).match(/(\d{4})[^\d]+(\d{1,2})/);
+            const match = String(dateStr).match(/(\d{4})[^\d]+(\d{1,2})[^\d]+(\d{1,2})/);
             if (match) {
-                return `${match[1]}-${match[2].padStart(2, '0')}`;
+                return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+            }
+            const matchMonth = String(dateStr).match(/(\d{4})[^\d]+(\d{1,2})/);
+            if (matchMonth) {
+                return `${matchMonth[1]}-${matchMonth[2].padStart(2, '0')}-01`;
             }
             return String(dateStr).trim();
         };
@@ -207,7 +228,6 @@
             } else {
                 d = new Date(dateStr);
             }
-            
             if (isNaN(d.getTime())) return null;
             const diffTime = d - today;
             return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -219,8 +239,8 @@
         }
         
         function clearDateRange() {
-            document.getElementById('start-month').value = '';
-            document.getElementById('end-month').value = '';
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
             filterAndRender();
         }
 
@@ -241,11 +261,16 @@
             const totalKey = findKey(row, ['總計', '總額']);
             const taxFree = parseNumber(totalKey ? row[totalKey] : '0') / 1.05;
             const dateKey = findKey(row, ['出貨日', '出貨日期']);
-            const yyyyMM = standardizeDate(dateKey ? row[dateKey] : '');
+            
+            // 畫面過濾用（精準到天）
+            const yyyyMMDD = standardizeDateToDay(dateKey ? row[dateKey] : '');
+            // 獎金計算用（死守月份，避免跨天門檻失效）
+            const yyyyMM = yyyyMMDD.substring(0, 7);
             
             return { 
                 ...row, 
                 _taxFree: taxFree,
+                _yyyyMMDD: yyyyMMDD,
                 _yyyyMM: yyyyMM, 
                 _mappedStatus: findKey(row, ['訂單狀態']) ? row[findKey(row, ['訂單狀態'])] : '-',
                 _mappedTransport: findKey(row, ['運送狀態']) ? row[findKey(row, ['運送狀態'])] : '-',
@@ -257,21 +282,23 @@
         };
 
         function filterAndRender() {
-            const startMonth = document.getElementById('start-month').value;
-            const endMonth = document.getElementById('end-month').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
             const searchKeyword = document.getElementById('search-input').value.toLowerCase();
 
-            const allMappedData = rawData.map(mapRowToData).filter(row => row._yyyyMM && row._yyyyMM.length >= 6);
+            const allMappedData = rawData.map(mapRowToData).filter(row => row._yyyyMMDD && row._yyyyMMDD.length >= 8);
 
             let monthlyStats = {};
             const currentFilteredData = allMappedData.filter(row => {
                 let isDateInRange = true;
-                if (startMonth && endMonth) {
-                    isDateInRange = (row._yyyyMM >= startMonth && row._yyyyMM <= endMonth);
+                if (startDate && endDate) {
+                    // 畫面過濾：使用精準到「天」的字串比較
+                    isDateInRange = (row._yyyyMMDD >= startDate && row._yyyyMMDD <= endDate);
                 }
                 return isDateInRange && Object.values(row).join(' ').toLowerCase().includes(searchKeyword);
             });
 
+            // 獎金計算：依然以月(_yyyyMM)為單位進行總結算
             currentFilteredData.forEach(row => {
                 if (!monthlyStats[row._yyyyMM]) monthlyStats[row._yyyyMM] = { taxFree: 0 };
                 monthlyStats[row._yyyyMM].taxFree += row._taxFree;
@@ -358,11 +385,9 @@
 
             if (alertData.length === 0) {
                 document.getElementById('alert-empty-state').classList.replace('hidden', 'flex');
-                // 🔥 如果天下太平，就把頂部的紅色警報膠囊藏起來
                 topAlertBadge.classList.replace('flex', 'hidden');
             } else {
                 document.getElementById('alert-empty-state').classList.replace('flex', 'hidden');
-                // 🔥 如果有死神逼近，就讓頂部的紅色警報膠囊現身
                 topAlertBadge.classList.replace('hidden', 'flex');
                 
                 alertData.forEach((row) => {
@@ -390,6 +415,8 @@
                 });
             }
         }
+
+        document.getElementById('search-input').addEventListener('input', filterAndRender);
 
         function openModal(data) {
             if(!data) return;
