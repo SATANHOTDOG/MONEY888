@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家具專員獎金計算 (極簡 2% 完整版)</title>
-    <!-- 全新客製化專屬金錢圖示 (向量高畫質翠綠光芒版) -->
+    <!-- 全新客製化專屬金錢圖示 -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     
@@ -13,6 +13,13 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .text-gradient { background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        /* 為警報區新增一點呼吸燈效果 */
+        @keyframes pulse-border {
+            0% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 15px rgba(239, 68, 68, 0.1); }
+            50% { border-color: rgba(239, 68, 68, 0.8); box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); }
+            100% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 15px rgba(239, 68, 68, 0.1); }
+        }
+        .alert-container { animation: pulse-border 2s infinite; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-200 min-h-screen p-4 md:p-8">
@@ -73,7 +80,7 @@
             </div>
         </div>
 
-        <!-- Data Table -->
+        <!-- Main Data Table -->
         <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
                 <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">出貨明細與業績清單</h3>
@@ -99,6 +106,40 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 🚨 全域死亡倒數警報區 (獨立運作) 🚨 -->
+        <div class="bg-slate-800 rounded-xl border border-red-500/50 shadow-lg overflow-hidden mt-6 alert-container">
+            <div class="px-6 py-4 border-b border-red-500/30 flex justify-between items-center bg-red-950/40">
+                <h3 class="text-sm font-bold text-red-400 flex items-center gap-2">
+                    <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    死亡倒數：7天內貨押未排程警報 (無視區間，全庫掃描)
+                </h3>
+                <span id="alert-record-count" class="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded-md border border-red-500/30 font-bold">0 筆警報</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900/50 text-red-400/70 text-xs uppercase tracking-wider">
+                            <th class="px-6 py-4 font-semibold w-24">出貨日</th>
+                            <th class="px-6 py-4 font-semibold">單號</th>
+                            <th class="px-6 py-4 font-semibold">顧客姓名</th>
+                            <th class="px-6 py-4 font-semibold">狀態/運送</th>
+                            <th class="px-6 py-4 font-semibold text-red-400">貨押日 (關鍵)</th>
+                            <th class="px-6 py-4 font-semibold text-right">除稅後業績</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alert-table-body" class="divide-y divide-red-900/30 text-sm">
+                    </tbody>
+                </table>
+                <div id="alert-empty-state" class="hidden flex-col items-center justify-center py-10 text-slate-500 bg-slate-900/30">
+                    <p class="text-sm font-medium text-emerald-500/70 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        目前全資料庫中沒有即將到期的未排程訂單。算你好運。
+                    </p>
+                </div>
+            </div>
+        </div>
+        
     </div>
 
     <!-- Modal for details -->
@@ -124,7 +165,6 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsiRtuRUot8LDq8j8rDjaWbGOyEj5w_E2GPYRmasu7WrSYLgECaYA9V5rAcbY-jcCVWWG2l_jKIWpU/pub?gid=1593533278&single=true&output=csv';
 
         let rawData = [];
-        let currentFilteredData = [];
         const today = new Date();
         const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('start-month').value = currentMonth;
@@ -193,58 +233,59 @@
                 }
             });
         }
+        
+        // 統一將原始資料映射成系統需要的格式，減少重複代碼
+        const mapRowToData = (row) => {
+            const totalKey = findKey(row, ['總計', '總額']);
+            const taxFree = parseNumber(totalKey ? row[totalKey] : '0') / 1.05;
+            const dateKey = findKey(row, ['出貨日', '出貨日期']);
+            const yyyyMM = standardizeDate(dateKey ? row[dateKey] : '');
+            
+            return { 
+                ...row, 
+                _taxFree: taxFree,
+                _yyyyMM: yyyyMM, 
+                _mappedStatus: findKey(row, ['訂單狀態']) ? row[findKey(row, ['訂單狀態'])] : '-',
+                _mappedTransport: findKey(row, ['運送狀態']) ? row[findKey(row, ['運送狀態'])] : '-',
+                _mappedPledge: findKey(row, ['貨押日']) ? row[findKey(row, ['貨押日'])] : '-',
+                _mappedCustomer: findKey(row, ['顧客姓名', '姓名']) ? row[findKey(row, ['顧客姓名', '姓名'])] : '-',
+                _mappedOrder: findKey(row, ['單號', '編號']) ? row[findKey(row, ['單號', '編號'])] : '-',
+                _mappedDate: findKey(row, ['出貨日']) ? row[findKey(row, ['出貨日'])] : '-'
+            };
+        };
 
         function filterAndRender() {
             const startMonth = document.getElementById('start-month').value;
             const endMonth = document.getElementById('end-month').value;
             const searchKeyword = document.getElementById('search-input').value.toLowerCase();
 
-            let monthlyStats = {};
-            let globalTotalTaxFree = 0;
-            let globalTotalBonus = 0;
+            // 1. 統一對所有原始資料進行 Mapping
+            const allMappedData = rawData.map(mapRowToData).filter(row => row._yyyyMM && row._yyyyMM.length >= 6);
 
-            currentFilteredData = rawData.filter(row => {
-                const dateKey = findKey(row, ['出貨日', '出貨日期']);
-                const outDate = dateKey ? row[dateKey] : '';
-                const yyyyMM = standardizeDate(outDate);
-                if (!yyyyMM || yyyyMM.length < 6) return false;
-                
+            // 2. 處理主報表 (受限於區間與搜尋)
+            let monthlyStats = {};
+            const currentFilteredData = allMappedData.filter(row => {
                 let isDateInRange = true;
                 if (startMonth && endMonth) {
-                    isDateInRange = (yyyyMM >= startMonth && yyyyMM <= endMonth);
+                    isDateInRange = (row._yyyyMM >= startMonth && row._yyyyMM <= endMonth);
                 }
-                
                 return isDateInRange && Object.values(row).join(' ').toLowerCase().includes(searchKeyword);
-            }).map(row => {
-                const totalKey = findKey(row, ['總計', '總額']);
-                const taxFree = parseNumber(totalKey ? row[totalKey] : '0') / 1.05;
-
-                const dateKey = findKey(row, ['出貨日', '出貨日期']);
-                const yyyyMM = standardizeDate(dateKey ? row[dateKey] : '');
-                
-                if (yyyyMM) {
-                    if (!monthlyStats[yyyyMM]) monthlyStats[yyyyMM] = { taxFree: 0 };
-                    monthlyStats[yyyyMM].taxFree += taxFree;
-                }
-
-                return { 
-                    ...row, 
-                    _taxFree: taxFree, 
-                    _mappedStatus: findKey(row, ['訂單狀態']) ? row[findKey(row, ['訂單狀態'])] : '-',
-                    _mappedTransport: findKey(row, ['運送狀態']) ? row[findKey(row, ['運送狀態'])] : '-',
-                    _mappedPledge: findKey(row, ['貨押日']) ? row[findKey(row, ['貨押日'])] : '-',
-                    _mappedCustomer: findKey(row, ['顧客姓名', '姓名']) ? row[findKey(row, ['顧客姓名', '姓名'])] : '-',
-                    _mappedOrder: findKey(row, ['單號', '編號']) ? row[findKey(row, ['單號', '編號'])] : '-',
-                    _mappedDate: findKey(row, ['出貨日']) ? row[findKey(row, ['出貨日'])] : '-'
-                };
             });
 
+            // 統計當前區間業績
+            currentFilteredData.forEach(row => {
+                if (!monthlyStats[row._yyyyMM]) monthlyStats[row._yyyyMM] = { taxFree: 0 };
+                monthlyStats[row._yyyyMM].taxFree += row._taxFree;
+            });
+
+            let globalTotalTaxFree = 0;
+            let globalTotalBonus = 0;
             for (const month in monthlyStats) {
-                const stats = monthlyStats[month];
-                globalTotalTaxFree += stats.taxFree;
-                globalTotalBonus += calculateSimpleBonus(stats.taxFree);
+                globalTotalTaxFree += monthlyStats[month].taxFree;
+                globalTotalBonus += calculateSimpleBonus(monthlyStats[month].taxFree);
             }
 
+            // 更新主報表 UI
             document.getElementById('total-revenue').innerText = formatTWD(globalTotalTaxFree);
             document.getElementById('total-bonus').innerText = formatTWD(globalTotalBonus);
             document.getElementById('progress-bar').style.width = `${Math.min((globalTotalTaxFree / 400000) * 100, 100)}%`;
@@ -266,49 +307,93 @@
             
             if (currentFilteredData.length === 0) {
                 document.getElementById('empty-state').classList.replace('hidden', 'flex');
-                return;
+            } else {
+                document.getElementById('empty-state').classList.replace('flex', 'hidden');
+                currentFilteredData.forEach((row) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-700/30 transition-colors cursor-pointer group';
+                    tr.onclick = () => openModal(row); // 直接把整筆資料傳進去
+
+                    let pledgeAlert = '';
+                    if (String(row._mappedStatus).includes('未排程') || String(row._mappedTransport).includes('未排程')) {
+                        const days = getDaysDiff(row._mappedPledge);
+                        if (days !== null && days <= 7 && days >= -30) {
+                            pledgeAlert = `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">即將到貨</span>`;
+                        }
+                    }
+
+                    let statusStyle = "bg-slate-700/50 text-slate-400 border-slate-600";
+                    if (String(row._mappedStatus).includes('已結案')) {
+                        statusStyle = "bg-yellow-500/20 text-yellow-300 border-yellow-500/80 shadow-[0_0_8px_rgba(234,179,8,0.25)] font-bold";
+                    }
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-slate-300 font-medium">${row._mappedDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">${row._mappedOrder}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedCustomer}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded text-xs border ${statusStyle}">${row._mappedStatus} / ${row._mappedTransport}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedPledge}${pledgeAlert}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-emerald-400 font-mono group-hover:font-bold">${formatTWD(row._taxFree)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             }
-            document.getElementById('empty-state').classList.replace('flex', 'hidden');
 
-            currentFilteredData.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-700/30 transition-colors cursor-pointer group';
-                tr.onclick = () => openModal(index);
-
-                // 🔥 終於修好的奪命警報判定 🔥
-                let pledgeAlert = '';
+            // 3. 處理底部的「全域死亡倒數警報區」(無視時間區間，只受限於搜尋關鍵字)
+            const alertData = allMappedData.filter(row => {
+                // 還是要尊重一下搜尋框，如果使用者想搜特定客人的警報
+                if (!Object.values(row).join(' ').toLowerCase().includes(searchKeyword)) return false;
+                
+                // 警報核心邏輯
                 if (String(row._mappedStatus).includes('未排程') || String(row._mappedTransport).includes('未排程')) {
                     const days = getDaysDiff(row._mappedPledge);
                     if (days !== null && days <= 7 && days >= -30) {
-                        pledgeAlert = `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">即將到貨</span>`;
+                        return true;
                     }
                 }
-
-                let statusStyle = "bg-slate-700/50 text-slate-400 border-slate-600";
-                if (String(row._mappedStatus).includes('已結案')) {
-                    statusStyle = "bg-yellow-500/20 text-yellow-300 border-yellow-500/80 shadow-[0_0_8px_rgba(234,179,8,0.25)] font-bold";
-                }
-
-                tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-slate-300 font-medium">${row._mappedDate}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">${row._mappedOrder}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedCustomer}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 rounded text-xs border ${statusStyle}">${row._mappedStatus} / ${row._mappedTransport}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedPledge}${pledgeAlert}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-emerald-400 font-mono group-hover:font-bold">${formatTWD(row._taxFree)}</td>
-                `;
-                tbody.appendChild(tr);
+                return false;
             });
+
+            const alertTbody = document.getElementById('alert-table-body');
+            document.getElementById('alert-record-count').innerText = `${alertData.length} 筆警報`;
+            alertTbody.innerHTML = '';
+            
+            if (alertData.length === 0) {
+                document.getElementById('alert-empty-state').classList.replace('hidden', 'flex');
+            } else {
+                document.getElementById('alert-empty-state').classList.replace('flex', 'hidden');
+                
+                alertData.forEach((row) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-red-900/40 transition-colors cursor-pointer group bg-red-950/20';
+                    tr.onclick = () => openModal(row); // 一樣可以點開看明細
+
+                    // 算出具體差幾天，增加恐懼感
+                    const days = getDaysDiff(row._mappedPledge);
+                    let daysText = days === 0 ? "今天" : (days < 0 ? `逾期 ${Math.abs(days)} 天` : `剩 ${days} 天`);
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-slate-300 font-medium">${row._mappedDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">${row._mappedOrder}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedCustomer}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded text-xs border bg-red-900/50 text-red-300 border-red-700/50">${row._mappedStatus} / ${row._mappedTransport}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-red-400 font-bold flex items-center gap-2">
+                            ${row._mappedPledge}
+                            <span class="px-1.5 py-0.5 rounded text-[10px] bg-red-500 text-white animate-pulse">${daysText}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-emerald-400/50 font-mono">${formatTWD(row._taxFree)}</td>
+                    `;
+                    alertTbody.appendChild(tr);
+                });
+            }
         }
 
-        document.getElementById('search-input').addEventListener('input', filterAndRender);
-        document.getElementById('start-month').addEventListener('change', filterAndRender);
-        document.getElementById('end-month').addEventListener('change', filterAndRender);
-
-        function openModal(index) {
-            const data = currentFilteredData[index];
+        // 改寫為直接接收 data 物件，讓上下兩個表格都可以共用這個彈窗
+        function openModal(data) {
             if(!data) return;
 
             document.getElementById('modal-order-id').innerText = `單號: ${data._mappedOrder || '無'}`;
