@@ -121,7 +121,6 @@
     </div>
 
     <script>
-        // 🚨 這裡要放你最新的那串網址 🚨
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsiRtuRUot8LDq8j8rDjaWbGOyEj5w_E2GPYRmasu7WrSYLgECaYA9V5rAcbY-jcCVWWG2l_jKIWpU/pub?gid=1593533278&single=true&output=csv';
 
         let rawData = [];
@@ -138,7 +137,6 @@
             return isNaN(Number(cleaned)) ? 0 : Number(cleaned);
         };
         
-        // 暴力升級版日期解析，無視橫線、斜線、小數點
         const standardizeDate = (dateStr) => {
             if (!dateStr) return '';
             const match = String(dateStr).match(/(\d{4})[^\d]+(\d{1,2})/);
@@ -159,7 +157,6 @@
 
         const getDaysDiff = (dateStr) => {
             if (!dateStr) return null;
-            // 這裡也套用暴力正則處理一下貨押日，免得算不出天數
             const match = String(dateStr).match(/(\d{4})[^\d]+(\d{1,2})[^\d]+(\d{1,2})/);
             let d;
             if (match) {
@@ -278,15 +275,15 @@
                 tr.className = 'hover:bg-slate-700/30 transition-colors cursor-pointer group';
                 tr.onclick = () => openModal(index);
 
+                // 🔥 終於修好的奪命警報判定 🔥
                 let pledgeAlert = '';
-                if (String(row._mappedTransport).includes('未排程')) {
+                if (String(row._mappedStatus).includes('未排程') || String(row._mappedTransport).includes('未排程')) {
                     const days = getDaysDiff(row._mappedPledge);
                     if (days !== null && days <= 7 && days >= -30) {
                         pledgeAlert = `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">即將到貨</span>`;
                     }
                 }
 
-                // 黃金結案框邏輯
                 let statusStyle = "bg-slate-700/50 text-slate-400 border-slate-600";
                 if (String(row._mappedStatus).includes('已結案')) {
                     statusStyle = "bg-yellow-500/20 text-yellow-300 border-yellow-500/80 shadow-[0_0_8px_rgba(234,179,8,0.25)] font-bold";
