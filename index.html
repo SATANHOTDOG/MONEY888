@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家具專員獎金計算 (綠點 PDF 戰術版)</title>
+    <title>家具專員獎金計算 (精準日期防禦版)</title>
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     
@@ -29,9 +29,8 @@
                 <h1 class="text-3xl font-bold text-gradient tracking-wide">家具專員獎金計算</h1>
                 <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
                     <span id="sync-status" class="block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    精準日期 + PDF 戰術版
+                    精準日期 + 雲端明細版
                 </span>
-                <!-- 頂部奪命警報藥丸 -->
                 <span id="top-alert-badge" onclick="document.querySelector('.alert-container').scrollIntoView({behavior: 'smooth'})" class="hidden px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/30 rounded-full text-xs font-bold items-center gap-1 whitespace-nowrap shadow-[0_0_10px_rgba(239,68,68,0.2)] cursor-pointer hover:bg-red-500/20 transition-colors" title="點擊直達地獄警報區">
                     <span class="block w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                     未排程到貨警示
@@ -271,7 +270,6 @@
                 _mappedCustomer: findKey(row, ['顧客姓名', '姓名']) ? row[findKey(row, ['顧客姓名', '姓名'])] : '-',
                 _mappedOrder: findKey(row, ['單號', '編號']) ? row[findKey(row, ['單號', '編號'])] : '-',
                 _mappedDate: findKey(row, ['出貨日']) ? row[findKey(row, ['出貨日'])] : '-',
-                // 🔥 新增：抓取 S 欄位的「訂單連結」 🔥
                 _mappedPdfLink: findKey(row, ['訂單連結']) ? row[findKey(row, ['訂單連結'])] : ''
             };
         };
@@ -345,22 +343,9 @@
                         statusStyle = "bg-yellow-500/20 text-yellow-300 border-yellow-500/80 shadow-[0_0_8px_rgba(234,179,8,0.25)] font-bold";
                     }
 
-                    // 🔥 PDF 綠色藥丸發射器：有連結才產生 html，並利用 stopPropagation 阻止跳出 Modal 🔥
-                    let pdfDot = '';
-                    if (row._mappedPdfLink && String(row._mappedPdfLink).trim().startsWith('http')) {
-                        pdfDot = `<a href="${row._mappedPdfLink}" target="_blank" onclick="event.stopPropagation()" class="ml-2 relative inline-flex items-center justify-center group" title="查看 PDF 訂單明細">
-                            <span class="absolute inline-flex w-3 h-3 rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
-                            <span class="relative inline-flex rounded-full w-2 h-2 bg-emerald-500 group-hover:bg-emerald-300 transition-colors shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-                        </a>`;
-                    }
-
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-slate-300 font-medium">${row._mappedDate}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">
-                            <div class="flex items-center">
-                                ${row._mappedOrder} ${pdfDot}
-                            </div>
-                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">${row._mappedOrder}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedCustomer}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 rounded text-xs border ${statusStyle}">${row._mappedStatus} / ${row._mappedTransport}</span>
@@ -404,22 +389,9 @@
                     const days = getDaysDiff(row._mappedPledge);
                     let daysText = days === 0 ? "今天" : (days < 0 ? `逾期 ${Math.abs(days)} 天` : `剩 ${days} 天`);
 
-                    // 警報區也要支援綠色藥丸
-                    let pdfDot = '';
-                    if (row._mappedPdfLink && String(row._mappedPdfLink).trim().startsWith('http')) {
-                        pdfDot = `<a href="${row._mappedPdfLink}" target="_blank" onclick="event.stopPropagation()" class="ml-2 relative inline-flex items-center justify-center group" title="查看 PDF 訂單明細">
-                            <span class="absolute inline-flex w-3 h-3 rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
-                            <span class="relative inline-flex rounded-full w-2 h-2 bg-emerald-500 group-hover:bg-emerald-300 transition-colors shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-                        </a>`;
-                    }
-
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-slate-300 font-medium">${row._mappedDate}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">
-                            <div class="flex items-center">
-                                ${row._mappedOrder} ${pdfDot}
-                            </div>
-                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">${row._mappedOrder}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedCustomer}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 rounded text-xs border bg-red-900/50 text-red-300 border-red-700/50">${row._mappedStatus} / ${row._mappedTransport}</span>
@@ -445,7 +417,6 @@
             const modalBody = document.getElementById('modal-body');
             modalBody.innerHTML = '';
             
-            // 🔥 新增「訂單連結」讓他在詳細視窗也能按 🔥
             const orderFields = ['顧客姓名', '手機', '訂單狀態', '運送狀態', '接單日', '出貨日', '時間', '貨押日', '備註', '訂單連結'];
             const amountFields = ['82+28大類', '66大類', '月份(費用吸收)', '費用吸收', '金額(費用吸收)', '總計', '除稅額']; 
 
@@ -453,7 +424,6 @@
                 if(value === undefined || value === '' || value === null) return;
                 
                 let displayValue = value;
-                // 如果是訂單連結，把醜醜的網址包裝成專業的按鈕
                 if (key === '訂單連結' && String(value).includes('http')) {
                     displayValue = `<a href="${value}" target="_blank" class="text-emerald-400 underline hover:text-emerald-300 transition-colors flex items-center gap-1 font-bold">開啟雲端明細 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>`;
                 }
