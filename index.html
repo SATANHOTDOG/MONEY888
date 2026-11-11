@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家具專員獎金計算 (含吸收運費防禦陣地)</title>
+    <title>家具專員獎金計算 (精準日期防禦版)</title>
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     
@@ -29,7 +29,7 @@
                 <h1 class="text-3xl font-bold text-gradient tracking-wide">家具專員獎金計算</h1>
                 <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
                     <span id="sync-status" class="block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    完整戰術版 (含費用防禦)
+                    精準日期 + 雲端明細版
                 </span>
                 <span id="top-alert-badge" onclick="document.querySelector('.alert-container').scrollIntoView({behavior: 'smooth'})" class="hidden px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/30 rounded-full text-xs font-bold items-center gap-1 whitespace-nowrap shadow-[0_0_10px_rgba(239,68,68,0.2)] cursor-pointer hover:bg-red-500/20 transition-colors" title="點擊直達地獄警報區">
                     <span class="block w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
@@ -226,13 +226,12 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsiRtuRUot8LDq8j8rDjaWbGOyEj5w_E2GPYRmasu7WrSYLgECaYA9V5rAcbY-jcCVWWG2l_jKIWpU/pub?gid=1593533278&single=true&output=csv';
 
         let rawData = [];
-        let allMappedDataCache = []; // 快取資料，讓費用區可以直接用
+        let allMappedDataCache = [];
 
         const today = new Date();
         const y = today.getFullYear();
         const m = today.getMonth();
         
-        // 上半部主系統預設當月
         const formatDateForInput = (date) => {
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         };
@@ -242,7 +241,6 @@
         document.getElementById('start-date').value = formatDateForInput(firstDay);
         document.getElementById('end-date').value = formatDateForInput(lastDay);
 
-        // 下半部費用區預設當月
         const currentMonthInput = `${y}-${String(m + 1).padStart(2, '0')}`;
         document.getElementById('fee-start-month').value = currentMonthInput;
         document.getElementById('fee-end-month').value = currentMonthInput;
@@ -267,7 +265,6 @@
             return String(dateStr).trim();
         };
 
-        // 🔥 解析「2026年10月」這種中文字串成 YYYY-MM 🔥
         const parseFeeMonthToYYYYMM = (monthStr) => {
             if (!monthStr) return '';
             const match = String(monthStr).match(/(\d{4})[^\d]+(\d{1,2})/);
@@ -320,11 +317,10 @@
                     rawData = results.data;
                     document.getElementById('sync-status').classList.replace('bg-amber-400', 'bg-emerald-400');
                     
-                    // 建立全域 Cache，供上下兩個系統共用
                     allMappedDataCache = rawData.map(mapRowToData);
                     
-                    filterAndRender(); // 渲染主系統與警報
-                    renderFeeTable(); // 渲染獨立費用系統
+                    filterAndRender();
+                    renderFeeTable();
                 }
             });
         }
@@ -337,9 +333,12 @@
             const yyyyMMDD = standardizeDateToDay(dateKey ? row[dateKey] : '');
             const yyyyMM = yyyyMMDD.substring(0, 7);
 
-            // 抓取費用吸收欄位
-            const feeMonthRaw = findKey(row, ['月份(費用吸收)', '吸收月份']) ? row[findKey(row, ['月份(費用吸收)', '吸收月份'])] : '';
-            const feeAmountRaw = findKey(row, ['費用吸收', '金額(費用吸收)', '吸收金額']) ? row[findKey(row, ['費用吸收', '金額(費用吸收)', '吸收金額'])] : '0';
+            // 🚨 修正關鍵字衝突：嚴格區分月份與金額，移除籠統的「費用吸收」 🚨
+            const feeMonthKey = findKey(row, ['月份(費用吸收)', '吸收月份']);
+            const feeMonthRaw = feeMonthKey ? row[feeMonthKey] : '';
+            
+            const feeAmountKey = findKey(row, ['金額(費用吸收)', '吸收金額']);
+            const feeAmountRaw = feeAmountKey ? row[feeAmountKey] : '0';
             
             return { 
                 ...row, 
@@ -354,21 +353,18 @@
                 _mappedDate: findKey(row, ['出貨日']) ? row[findKey(row, ['出貨日'])] : '-',
                 _mappedPdfLink: findKey(row, ['訂單連結']) ? row[findKey(row, ['訂單連結'])] : '',
                 _mappedRemark: findKey(row, ['備註']) ? row[findKey(row, ['備註'])] : '',
-                // 獨立過濾器專用
                 _feeYYYYMM: parseFeeMonthToYYYYMM(feeMonthRaw),
                 _feeOriginalString: feeMonthRaw,
                 _feeAmount: parseNumber(feeAmountRaw)
             };
         };
 
-        // 🛡️ 獨立渲染「吸收運費防禦陣地」 🛡️
         function renderFeeTable() {
-            const startMonth = document.getElementById('fee-start-month').value; // e.g. 2026-01
-            const endMonth = document.getElementById('fee-end-month').value; // e.g. 2026-10
+            const startMonth = document.getElementById('fee-start-month').value;
+            const endMonth = document.getElementById('fee-end-month').value;
             
             if (!startMonth || !endMonth) return;
 
-            // 計算這段期間有「幾個月」 (用來算 3000 元額度)
             const d1 = new Date(startMonth + "-01");
             const d2 = new Date(endMonth + "-01");
             let monthCount = 0;
@@ -377,7 +373,6 @@
             }
             const totalQuota = monthCount * 3000;
 
-            // 篩選出 Q 欄有值，且落在區間內的資料
             const feeData = allMappedDataCache.filter(row => {
                 if (row._feeYYYYMM === '' || row._feeAmount === 0) return false;
                 return (row._feeYYYYMM >= startMonth && row._feeYYYYMM <= endMonth);
@@ -392,14 +387,13 @@
             } else {
                 document.getElementById('fee-empty-state').classList.replace('flex', 'hidden');
                 
-                // 按月份排序(新的在上面)
                 feeData.sort((a, b) => b._feeYYYYMM.localeCompare(a._feeYYYYMM));
 
                 feeData.forEach(row => {
                     totalUsed += row._feeAmount;
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-indigo-900/40 transition-colors cursor-pointer group bg-indigo-950/10';
-                    tr.onclick = () => openModal(row); // 點擊一樣打開彈出視窗看詳細
+                    tr.onclick = () => openModal(row);
 
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-indigo-300 font-medium">${row._feeOriginalString}</td>
@@ -412,7 +406,6 @@
                 });
             }
 
-            // 更新免死金牌計分板
             const totalSaved = totalQuota - totalUsed;
             document.getElementById('fee-total-quota').innerText = formatTWD(totalQuota);
             document.getElementById('fee-total-used').innerText = formatTWD(totalUsed);
@@ -423,13 +416,11 @@
             if (totalSaved >= 0) {
                 savedEl.className = 'text-2xl font-black text-emerald-400';
             } else {
-                // 如果省下的錢變成負數（透支了），就變紅色警告
                 savedEl.className = 'text-2xl font-black text-red-500';
                 savedEl.innerText = `透支 ${formatTWD(Math.abs(totalSaved))}`;
             }
         }
 
-        // ================= 原本的主系統邏輯 =================
         function filterAndRender() {
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
@@ -574,7 +565,8 @@
             modalBody.innerHTML = '';
             
             const orderFields = ['顧客姓名', '手機', '訂單狀態', '運送狀態', '接單日', '出貨日', '時間', '貨押日', '備註', '訂單連結'];
-            const amountFields = ['82+28大類', '66大類', '月份(費用吸收)', '費用吸收', '金額(費用吸收)', '總計', '除稅額']; 
+            // 🚨 修正關鍵字衝突：移除這裡的泛用 '費用吸收' 🚨
+            const amountFields = ['82+28大類', '66大類', '月份(費用吸收)', '金額(費用吸收)', '總計', '除稅額']; 
 
             const renderField = (key, value, highlight = false, isWide = false) => {
                 if(value === undefined || value === '' || value === null) return;
