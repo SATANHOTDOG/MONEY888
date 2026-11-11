@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家具專員獎金計算 (精準日期防禦版)</title>
+    <title>家具專員獎金計算 (含吸收運費防禦陣地)</title>
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial, sans-serif' font-weight='900' font-size='65' fill='%2334d399' dominant-baseline='central' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     
@@ -29,7 +29,7 @@
                 <h1 class="text-3xl font-bold text-gradient tracking-wide">家具專員獎金計算</h1>
                 <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
                     <span id="sync-status" class="block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    精準日期 + 雲端明細版
+                    完整戰術版 (含費用防禦)
                 </span>
                 <span id="top-alert-badge" onclick="document.querySelector('.alert-container').scrollIntoView({behavior: 'smooth'})" class="hidden px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/30 rounded-full text-xs font-bold items-center gap-1 whitespace-nowrap shadow-[0_0_10px_rgba(239,68,68,0.2)] cursor-pointer hover:bg-red-500/20 transition-colors" title="點擊直達地獄警報區">
                     <span class="block w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
@@ -113,7 +113,7 @@
             </div>
         </div>
         
-        <!-- 🚨 全域死亡倒數警報區 (獨立運作) 🚨 -->
+        <!-- 🚨 全域死亡倒數警報區 🚨 -->
         <div class="bg-slate-800 rounded-xl border border-red-500/50 shadow-lg overflow-hidden mt-6 alert-container">
             <div class="px-6 py-4 border-b border-red-500/30 flex justify-between items-center bg-red-950/40">
                 <h3 class="text-sm font-bold text-red-400 flex items-center gap-2">
@@ -145,6 +145,61 @@
                 </div>
             </div>
         </div>
+
+        <!-- 🛡️ 吸收運費防禦陣地 (完全獨立運作) 🛡️ -->
+        <div class="bg-slate-800 rounded-xl border border-indigo-500/30 shadow-lg overflow-hidden mt-6">
+            <div class="px-6 py-4 border-b border-indigo-500/30 flex flex-col md:flex-row justify-between items-start md:items-center bg-indigo-950/20 gap-4">
+                <div class="flex flex-col">
+                    <h3 class="text-sm font-bold text-indigo-300 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        吸收運費防禦陣地 (免死金牌計算機)
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">此區獨立運作。用來對付主管審查，證明你前幾個月有多省。</p>
+                </div>
+                
+                <div class="flex items-center gap-2 bg-slate-900 border border-indigo-500/30 rounded-lg p-1">
+                    <span class="text-xs text-indigo-300 pl-2 whitespace-nowrap">審查區間:</span>
+                    <input type="month" id="fee-start-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto" onchange="renderFeeTable()">
+                    <span class="text-slate-500">-</span>
+                    <input type="month" id="fee-end-month" class="bg-transparent text-sm border-none focus:ring-0 text-slate-200 cursor-pointer p-1.5 w-auto" onchange="renderFeeTable()">
+                </div>
+            </div>
+
+            <!-- 免死金牌計分板 -->
+            <div class="grid grid-cols-3 divide-x divide-indigo-500/20 border-b border-indigo-500/30 bg-slate-800/80">
+                <div class="p-4 text-center">
+                    <div class="text-xs text-slate-400 mb-1">區間總額度 (3000/月)</div>
+                    <div id="fee-total-quota" class="text-2xl font-bold text-slate-200">$0</div>
+                </div>
+                <div class="p-4 text-center">
+                    <div class="text-xs text-slate-400 mb-1">實際總吸收</div>
+                    <div id="fee-total-used" class="text-2xl font-bold text-amber-400">$0</div>
+                </div>
+                <div class="p-4 text-center bg-indigo-900/10">
+                    <div class="text-xs text-indigo-300 font-bold mb-1">免死金牌結餘 (替公司省下)</div>
+                    <div id="fee-total-saved" class="text-2xl font-black text-emerald-400">$0</div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900/50 text-indigo-300/80 text-xs uppercase tracking-wider">
+                            <th class="px-6 py-4 font-semibold w-24">吸收月份</th>
+                            <th class="px-6 py-4 font-semibold">單號</th>
+                            <th class="px-6 py-4 font-semibold">顧客姓名</th>
+                            <th class="px-6 py-4 font-semibold text-right">吸收金額</th>
+                            <th class="px-6 py-4 font-semibold">備註 (談判籌碼)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fee-table-body" class="divide-y divide-indigo-900/30 text-sm">
+                    </tbody>
+                </table>
+                <div id="fee-empty-state" class="hidden flex-col items-center justify-center py-10 text-slate-500 bg-slate-900/30">
+                    <p class="text-sm font-medium">此區間內無任何運費吸收紀錄，真是個替公司著想的優良員工。</p>
+                </div>
+            </div>
+        </div>
         
     </div>
 
@@ -171,10 +226,13 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsiRtuRUot8LDq8j8rDjaWbGOyEj5w_E2GPYRmasu7WrSYLgECaYA9V5rAcbY-jcCVWWG2l_jKIWpU/pub?gid=1593533278&single=true&output=csv';
 
         let rawData = [];
+        let allMappedDataCache = []; // 快取資料，讓費用區可以直接用
+
         const today = new Date();
         const y = today.getFullYear();
         const m = today.getMonth();
         
+        // 上半部主系統預設當月
         const formatDateForInput = (date) => {
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         };
@@ -183,6 +241,11 @@
 
         document.getElementById('start-date').value = formatDateForInput(firstDay);
         document.getElementById('end-date').value = formatDateForInput(lastDay);
+
+        // 下半部費用區預設當月
+        const currentMonthInput = `${y}-${String(m + 1).padStart(2, '0')}`;
+        document.getElementById('fee-start-month').value = currentMonthInput;
+        document.getElementById('fee-end-month').value = currentMonthInput;
 
         const formatTWD = (num) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(num);
         const parseNumber = (val) => {
@@ -202,6 +265,16 @@
                 return `${matchMonth[1]}-${matchMonth[2].padStart(2, '0')}-01`;
             }
             return String(dateStr).trim();
+        };
+
+        // 🔥 解析「2026年10月」這種中文字串成 YYYY-MM 🔥
+        const parseFeeMonthToYYYYMM = (monthStr) => {
+            if (!monthStr) return '';
+            const match = String(monthStr).match(/(\d{4})[^\d]+(\d{1,2})/);
+            if (match) {
+                return `${match[1]}-${match[2].padStart(2, '0')}`;
+            }
+            return '';
         };
 
         const findKey = (row, keywords) => {
@@ -246,7 +319,12 @@
                 complete: function(results) {
                     rawData = results.data;
                     document.getElementById('sync-status').classList.replace('bg-amber-400', 'bg-emerald-400');
-                    filterAndRender();
+                    
+                    // 建立全域 Cache，供上下兩個系統共用
+                    allMappedDataCache = rawData.map(mapRowToData);
+                    
+                    filterAndRender(); // 渲染主系統與警報
+                    renderFeeTable(); // 渲染獨立費用系統
                 }
             });
         }
@@ -258,6 +336,10 @@
             
             const yyyyMMDD = standardizeDateToDay(dateKey ? row[dateKey] : '');
             const yyyyMM = yyyyMMDD.substring(0, 7);
+
+            // 抓取費用吸收欄位
+            const feeMonthRaw = findKey(row, ['月份(費用吸收)', '吸收月份']) ? row[findKey(row, ['月份(費用吸收)', '吸收月份'])] : '';
+            const feeAmountRaw = findKey(row, ['費用吸收', '金額(費用吸收)', '吸收金額']) ? row[findKey(row, ['費用吸收', '金額(費用吸收)', '吸收金額'])] : '0';
             
             return { 
                 ...row, 
@@ -270,19 +352,93 @@
                 _mappedCustomer: findKey(row, ['顧客姓名', '姓名']) ? row[findKey(row, ['顧客姓名', '姓名'])] : '-',
                 _mappedOrder: findKey(row, ['單號', '編號']) ? row[findKey(row, ['單號', '編號'])] : '-',
                 _mappedDate: findKey(row, ['出貨日']) ? row[findKey(row, ['出貨日'])] : '-',
-                _mappedPdfLink: findKey(row, ['訂單連結']) ? row[findKey(row, ['訂單連結'])] : ''
+                _mappedPdfLink: findKey(row, ['訂單連結']) ? row[findKey(row, ['訂單連結'])] : '',
+                _mappedRemark: findKey(row, ['備註']) ? row[findKey(row, ['備註'])] : '',
+                // 獨立過濾器專用
+                _feeYYYYMM: parseFeeMonthToYYYYMM(feeMonthRaw),
+                _feeOriginalString: feeMonthRaw,
+                _feeAmount: parseNumber(feeAmountRaw)
             };
         };
 
+        // 🛡️ 獨立渲染「吸收運費防禦陣地」 🛡️
+        function renderFeeTable() {
+            const startMonth = document.getElementById('fee-start-month').value; // e.g. 2026-01
+            const endMonth = document.getElementById('fee-end-month').value; // e.g. 2026-10
+            
+            if (!startMonth || !endMonth) return;
+
+            // 計算這段期間有「幾個月」 (用來算 3000 元額度)
+            const d1 = new Date(startMonth + "-01");
+            const d2 = new Date(endMonth + "-01");
+            let monthCount = 0;
+            if (d2 >= d1) {
+                monthCount = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()) + 1;
+            }
+            const totalQuota = monthCount * 3000;
+
+            // 篩選出 Q 欄有值，且落在區間內的資料
+            const feeData = allMappedDataCache.filter(row => {
+                if (row._feeYYYYMM === '' || row._feeAmount === 0) return false;
+                return (row._feeYYYYMM >= startMonth && row._feeYYYYMM <= endMonth);
+            });
+
+            let totalUsed = 0;
+            const feeTbody = document.getElementById('fee-table-body');
+            feeTbody.innerHTML = '';
+
+            if (feeData.length === 0) {
+                document.getElementById('fee-empty-state').classList.replace('hidden', 'flex');
+            } else {
+                document.getElementById('fee-empty-state').classList.replace('flex', 'hidden');
+                
+                // 按月份排序(新的在上面)
+                feeData.sort((a, b) => b._feeYYYYMM.localeCompare(a._feeYYYYMM));
+
+                feeData.forEach(row => {
+                    totalUsed += row._feeAmount;
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-indigo-900/40 transition-colors cursor-pointer group bg-indigo-950/10';
+                    tr.onclick = () => openModal(row); // 點擊一樣打開彈出視窗看詳細
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-indigo-300 font-medium">${row._feeOriginalString}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-blue-400 font-mono text-xs">${row._mappedOrder}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-slate-300">${row._mappedCustomer}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-amber-400 font-mono font-bold">${formatTWD(row._feeAmount)}</td>
+                        <td class="px-6 py-4 text-slate-400 text-xs max-w-xs truncate" title="${row._mappedRemark}">${row._mappedRemark || '-'}</td>
+                    `;
+                    feeTbody.appendChild(tr);
+                });
+            }
+
+            // 更新免死金牌計分板
+            const totalSaved = totalQuota - totalUsed;
+            document.getElementById('fee-total-quota').innerText = formatTWD(totalQuota);
+            document.getElementById('fee-total-used').innerText = formatTWD(totalUsed);
+            
+            const savedEl = document.getElementById('fee-total-saved');
+            savedEl.innerText = formatTWD(totalSaved);
+            
+            if (totalSaved >= 0) {
+                savedEl.className = 'text-2xl font-black text-emerald-400';
+            } else {
+                // 如果省下的錢變成負數（透支了），就變紅色警告
+                savedEl.className = 'text-2xl font-black text-red-500';
+                savedEl.innerText = `透支 ${formatTWD(Math.abs(totalSaved))}`;
+            }
+        }
+
+        // ================= 原本的主系統邏輯 =================
         function filterAndRender() {
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
             const searchKeyword = document.getElementById('search-input').value.toLowerCase();
 
-            const allMappedData = rawData.map(mapRowToData).filter(row => row._yyyyMMDD && row._yyyyMMDD.length >= 8);
+            const validMainData = allMappedDataCache.filter(row => row._yyyyMMDD && row._yyyyMMDD.length >= 8);
 
             let monthlyStats = {};
-            const currentFilteredData = allMappedData.filter(row => {
+            const currentFilteredData = validMainData.filter(row => {
                 let isDateInRange = true;
                 if (startDate && endDate) {
                     isDateInRange = (row._yyyyMMDD >= startDate && row._yyyyMMDD <= endDate);
@@ -357,7 +513,7 @@
                 });
             }
 
-            const alertData = allMappedData.filter(row => {
+            const alertData = validMainData.filter(row => {
                 if (!Object.values(row).join(' ').toLowerCase().includes(searchKeyword)) return false;
                 if (String(row._mappedStatus).includes('未排程') || String(row._mappedTransport).includes('未排程')) {
                     const days = getDaysDiff(row._mappedPledge);
